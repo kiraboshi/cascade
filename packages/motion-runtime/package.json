@@ -5,11 +5,14 @@
   "main": "./dist/index.js",
   "module": "./dist/index.mjs",
   "types": "./dist/index.d.ts",
+  "source": "./src/index.ts",
   "exports": {
     ".": {
+      "source": "./src/index.ts",
       "import": "./dist/index.mjs",
       "require": "./dist/index.js",
-      "types": "./dist/index.d.ts"
+      "types": "./dist/index.d.ts",
+      "default": "./src/index.ts"
     }
   },
   "files": [
@@ -17,7 +20,9 @@
   ],
   "scripts": {
     "build": "tsc",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run",
+    "test:watch": "vitest"
   },
   "dependencies": {
     "@cascade/compiler": "workspace:*"

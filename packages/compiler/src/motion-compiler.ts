@@ -342,3 +342,61 @@ ${keyframeRules}
   };
 }
 
+/**
+ * Define motion animation that uses CSS variables (for runtime control)
+ */
+export interface MotionValueKeyframeConfig {
+  values: Record<string, {
+    from: string; // CSS variable name or value
+    to: string;   // CSS variable name or value
+  }>;
+  duration?: number | string;
+  easing?: string;
+}
+
+export function defineMotionWithValues(
+  config: MotionValueKeyframeConfig
+): MotionOutput {
+  const name = `motion-values-${Math.random().toString(36).substr(2, 9)}`;
+  const duration = typeof config.duration === 'number'
+    ? `${config.duration}ms`
+    : config.duration || '300ms';
+  const easing = config.easing || 'ease';
+  
+  // Helper to format CSS variable reference
+  const formatValue = (value: string): string => {
+    if (value.startsWith('--')) {
+      return `var(${value})`;
+    }
+    return value;
+  };
+  
+  const keyframeRules = `
+  0% {
+    ${Object.entries(config.values).map(([prop, { from }]) => {
+      return `${prop}: ${formatValue(from)};`;
+    }).join('\n    ')}
+  }
+  100% {
+    ${Object.entries(config.values).map(([prop, { to }]) => {
+      return `${prop}: ${formatValue(to)};`;
+    }).join('\n    ')}
+  }
+  `;
+  
+  const css = `
+@keyframes ${name} {
+  ${keyframeRules}
+}
+
+.${name} {
+  animation: ${name} ${duration} ${easing};
+}
+  `.trim();
+  
+  return {
+    css,
+    className: name,
+  };
+}
+

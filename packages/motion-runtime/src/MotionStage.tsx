@@ -3,15 +3,22 @@
  */
 
 import { forwardRef, useEffect, useRef, useState, type ReactNode, type CSSProperties } from 'react';
+import { useLayoutTransition, type LayoutTransitionConfig } from './useLayoutTransition';
 
 export interface MotionStageProps {
-  animation: string | { className: string; css?: string };
+  animation?: string | { className: string; css?: string };
   delay?: number | 'until-previous-completes';
   onComplete?: (event: { next: () => void }) => void;
   onStart?: () => void;
   style?: CSSProperties;
   className?: string;
   children?: ReactNode;
+  /**
+   * Enable layout transition (FLIP) for this stage.
+   * When enabled, the element will automatically animate layout changes (position, size).
+   * Can be a boolean to enable with defaults, or a config object for customization.
+   */
+  layoutTransition?: boolean | LayoutTransitionConfig;
 }
 
 export const MotionStage = forwardRef<HTMLDivElement, MotionStageProps>(function MotionStage({
@@ -22,18 +29,31 @@ export const MotionStage = forwardRef<HTMLDivElement, MotionStageProps>(function
   style,
   className,
   children,
+  layoutTransition,
 }, ref) {
   const elementRef = useRef<HTMLDivElement>(null);
   const [isActive, setIsActive] = useState(false);
   const [shouldStart, setShouldStart] = useState(delay === 0 || delay === 'until-previous-completes');
   
-  const animationClassName = typeof animation === 'string' 
-    ? animation 
-    : animation.className;
+  // Apply layout transition if enabled, but disable it when CSS animation is active
+  // This prevents conflicts between CSS animations and layout transitions
+  const layoutTransitionConfig: LayoutTransitionConfig | undefined = layoutTransition
+    ? typeof layoutTransition === 'boolean'
+      ? { enabled: layoutTransition && !isActive }
+      : { ...layoutTransition, enabled: layoutTransition.enabled !== false && !isActive }
+    : undefined;
+  
+  useLayoutTransition(elementRef, layoutTransitionConfig);
+  
+  const animationClassName = animation
+    ? typeof animation === 'string' 
+      ? animation 
+      : animation.className
+    : undefined;
   
   useEffect(() => {
     // Inject CSS if provided
-    if (typeof animation === 'object' && animation.css) {
+    if (animation && typeof animation === 'object' && animation.css) {
       const styleId = `motion-style-${animation.className}`;
       if (!document.getElementById(styleId)) {
         const styleElement = document.createElement('style');
@@ -45,7 +65,8 @@ export const MotionStage = forwardRef<HTMLDivElement, MotionStageProps>(function
   }, [animation]);
   
   useEffect(() => {
-    if (!shouldStart || !elementRef.current) {
+    // Skip animation logic if no animation is provided
+    if (!animation || !animationClassName || !shouldStart || !elementRef.current) {
       return;
     }
     
@@ -93,7 +114,7 @@ export const MotionStage = forwardRef<HTMLDivElement, MotionStageProps>(function
       element.removeEventListener('animationend', handleAnimationEnd);
       element.classList.remove(animationClassName);
     };
-  }, [shouldStart, delay, animationClassName, onStart, onComplete]);
+  }, [shouldStart, delay, animationClassName, onStart, onComplete, animation]);
   
   // Expose method to start this stage (called by MotionSequence)
   useEffect(() => {

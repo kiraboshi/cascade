@@ -1,3 +1,11 @@
+---
+title: Cascade CSS Foundation - Implementation Plan
+type: plan
+status: completed
+completed_at: 2025-01-11
+scope: foundation
+---
+
 # Cascade CSS Foundation: Implementation Plan
 
 ## Architecture Overview

@@ -5,6 +5,7 @@
 import { useEffect, useRef, useState, type ReactNode, Children, cloneElement, isValidElement } from 'react';
 import { MotionStage, type MotionStageProps } from './MotionStage';
 import { prefersReducedMotion } from './motion-state';
+import type { LayoutTransitionConfig } from './useLayoutTransition';
 
 export interface MotionSequenceProps {
   children: ReactNode;
@@ -12,6 +13,11 @@ export interface MotionSequenceProps {
   autoStart?: boolean;
   respectReducedMotion?: boolean;
   pauseOnHover?: boolean;
+  /**
+   * Default layout transition config for all stages in this sequence.
+   * Individual stages can override this with their own `layoutTransition` prop.
+   */
+  layoutTransition?: boolean | LayoutTransitionConfig;
 }
 
 export function MotionSequence({
@@ -20,6 +26,7 @@ export function MotionSequence({
   autoStart = false,
   respectReducedMotion = true,
   pauseOnHover = false,
+  layoutTransition,
 }: MotionSequenceProps) {
   const [currentStageIndex, setCurrentStageIndex] = useState(0);
   const [isPaused, setIsPaused] = useState(false);
@@ -126,10 +133,16 @@ export function MotionSequence({
       }
     };
     
+    // Apply default layout transition if provided and stage doesn't have its own
+    const layoutTransitionProp = stage.props.layoutTransition !== undefined
+      ? stage.props.layoutTransition
+      : layoutTransition;
+    
     return cloneElement(stage, {
       ...stage.props,
       key: stage.key || index,
       onComplete: enhancedOnComplete,
+      layoutTransition: layoutTransitionProp,
       ref: (el: HTMLDivElement | null) => {
         stageRefs.current[index] = el;
         if (typeof stage.ref === 'function') {

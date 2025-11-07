@@ -1,9 +1,48 @@
 import { defineConfig } from 'vite';
 import react from '@vitejs/plugin-react';
 import path from 'path';
+import type { Plugin } from 'vite';
+import { cascadeVitePlugin } from '../../packages/compiler/src/vite-plugin';
+
+// Plugin to fix workspace package resolution during config loading
+function workspacePackageResolver(): Plugin {
+  return {
+    name: 'workspace-package-resolver',
+    enforce: 'pre',
+    config(config) {
+      // Ensure workspace packages are not externalized
+      if (!config.optimizeDeps) {
+        config.optimizeDeps = {};
+      }
+      if (!Array.isArray(config.optimizeDeps.exclude)) {
+        config.optimizeDeps.exclude = [];
+      }
+      const exclude = config.optimizeDeps.exclude as string[];
+      ['@cascade/tokens', '@cascade/core', '@cascade/compiler', '@cascade/react', '@cascade/motion-runtime', '@cascade/motion-gestures'].forEach(pkg => {
+        if (!exclude.includes(pkg)) exclude.push(pkg);
+      });
+    },
+    resolveId(id, importer) {
+      // Resolve @cascade packages to source files
+      if (id.startsWith('@cascade/')) {
+        const packageName = id.replace('@cascade/', '');
+        const packagePath = path.resolve(__dirname, `../../packages/${packageName}/src/index.ts`);
+        const fs = require('fs');
+        if (fs.existsSync(packagePath)) {
+          return packagePath;
+        }
+      }
+    },
+  };
+}
 
 export default defineConfig({
   plugins: [
+    workspacePackageResolver(),
+    cascadeVitePlugin({
+      watchTokens: true,
+      generateFoundationCSS: true,
+    }),
     react({
       babel: {
         plugins: [
@@ -30,13 +69,46 @@ export default defineConfig({
     }),
   ],
   resolve: {
-    alias: {
-      '@cascade/core': path.resolve(__dirname, '../../packages/core/src'),
-      '@cascade/react': path.resolve(__dirname, '../../packages/react/src'),
-      '@cascade/compiler': path.resolve(__dirname, '../../packages/compiler/src'),
-      '@cascade/motion-runtime': path.resolve(__dirname, '../../packages/motion-runtime/src'),
-      '@cascade/tokens': path.resolve(__dirname, '../../packages/tokens/src'),
-    },
+    conditions: ['source', 'import', 'module', 'browser', 'default'],
+    alias: [
+      {
+        find: '@cascade/core',
+        replacement: path.resolve(__dirname, '../../packages/core/src'),
+      },
+      {
+        find: '@cascade/react',
+        replacement: path.resolve(__dirname, '../../packages/react/src'),
+      },
+      {
+        find: '@cascade/compiler',
+        replacement: path.resolve(__dirname, '../../packages/compiler/src'),
+      },
+      {
+        find: '@cascade/motion-runtime',
+        replacement: path.resolve(__dirname, '../../packages/motion-runtime/src'),
+      },
+      {
+        find: '@cascade/motion-gestures',
+        replacement: path.resolve(__dirname, '../../packages/motion-gestures/src'),
+      },
+      {
+        find: '@cascade/tokens',
+        replacement: path.resolve(__dirname, '../../packages/tokens/src'),
+      },
+    ],
+  },
+  optimizeDeps: {
+    exclude: [
+      '@cascade/core',
+      '@cascade/react',
+      '@cascade/compiler',
+      '@cascade/motion-runtime',
+      '@cascade/motion-gestures',
+      '@cascade/tokens',
+    ],
+  },
+  ssr: {
+    noExternal: ['@cascade/core', '@cascade/tokens', '@cascade/compiler'],
   },
   server: {
     port: 3000,

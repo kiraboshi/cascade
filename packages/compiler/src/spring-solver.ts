@@ -8,6 +8,7 @@ export interface SpringConfig {
   mass?: number;
   from: number;
   to: number;
+  initialVelocity?: number;
 }
 
 /**
@@ -48,12 +49,12 @@ export function solveSpring(
   duration: number = 1000,
   steps: number = 60
 ): number[] {
-  const { stiffness, damping, mass = 1, from, to } = config;
+  const { stiffness, damping, mass = 1, from, to, initialVelocity = 0 } = config;
   const dt = duration / steps;
   const values: number[] = [from];
   
   let y = from;
-  let v = 0;
+  let v = initialVelocity;
   
   for (let i = 0; i < steps; i++) {
     [y, v] = rk4(y, v, stiffness, damping, mass, to, dt);

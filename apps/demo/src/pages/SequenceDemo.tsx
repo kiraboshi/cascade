@@ -34,6 +34,10 @@ const nextAnimation = defineMotion({
 
 export function SequenceDemo() {
   const [key, setKey] = useState(0);
+  const [position, setPosition] = useState({ x: 0, y: 0 });
+  const [size, setSize] = useState({ width: 100, height: 100 });
+  const [items, setItems] = useState([1, 2, 3]);
+  const [expanded, setExpanded] = useState(false);
   
   // Inject CSS from motion compiler
   useEffect(() => {
@@ -144,6 +148,309 @@ export function SequenceDemo() {
             fontSize: '0.875rem'
           }}>
             {JSON.stringify(slideAndFadeSequence.jsConfig, null, 2)}
+          </pre>
+        </details>
+      </section>
+      
+      <section style={{ marginTop: '2rem' }}>
+        <h3>Layout Transition Integration</h3>
+        <p>
+          MotionStage now supports layout transitions! Enable layout transitions
+          to automatically animate position and size changes.
+        </p>
+        
+        <div style={{ marginTop: '1rem', display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
+          <button onClick={() => setPosition({ x: Math.random() * 300, y: Math.random() * 200 })}>
+            Random Position
+          </button>
+          <button onClick={() => setSize({ width: 50 + Math.random() * 150, height: 50 + Math.random() * 150 })}>
+            Random Size
+          </button>
+          <button onClick={() => {
+            setPosition({ x: 0, y: 0 });
+            setSize({ width: 100, height: 100 });
+          }}>
+            Reset
+          </button>
+        </div>
+        
+        <div style={{ 
+          marginTop: '2rem', 
+          height: '300px',
+          position: 'relative',
+          border: '1px solid #ccc',
+          borderRadius: '8px',
+          overflow: 'hidden',
+          backgroundColor: '#f9fafb'
+        }}>
+          <MotionSequence layoutTransition={{ duration: 400, easing: 'cubic-bezier(0.4, 0, 0.2, 1)' }}>
+            <MotionStage
+              layoutTransition={true}
+              style={{
+                position: 'absolute',
+                left: `${position.x}px`,
+                top: `${position.y}px`,
+                width: `${size.width}px`,
+                height: `${size.height}px`,
+              }}
+            >
+              <div
+                style={{
+                  width: '100%',
+                  height: '100%',
+                  background: 'var(--cascade-color-primary)',
+                  borderRadius: '8px',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  color: 'white',
+                  fontWeight: 'bold',
+                }}
+              >
+                Layout Transition Enabled
+              </div>
+            </MotionStage>
+          </MotionSequence>
+        </div>
+        
+        <details style={{ marginTop: '1rem' }}>
+          <summary>Code Example</summary>
+          <pre style={{ 
+            marginTop: '0.5rem', 
+            padding: '1rem', 
+            backgroundColor: '#f3f4f6', 
+            borderRadius: '8px',
+            overflow: 'auto',
+            fontSize: '0.875rem'
+          }}>
+{`<MotionSequence layoutTransition={{ duration: 400 }}>
+  <MotionStage
+    animation={myAnimation}
+    layoutTransition={true}
+    style={{ left: \`\${x}px\`, top: \`\${y}px\` }}
+  >
+    <div>Content</div>
+  </MotionStage>
+</MotionSequence>`}
+          </pre>
+        </details>
+      </section>
+      
+      <section style={{ marginTop: '2rem' }}>
+        <h3>Layout Transition with List Reordering</h3>
+        <p>
+          Layout transitions work seamlessly with list reordering. Each stage
+          automatically animates to its new position when items are reordered.
+        </p>
+        
+        <div style={{ marginTop: '1rem', display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
+          <button onClick={() => setItems([...items].reverse())}>
+            Reverse Order
+          </button>
+          <button onClick={() => setItems([items[items.length - 1], ...items.slice(0, -1)])}>
+            Move Last to First
+          </button>
+          <button onClick={() => setItems([1, 2, 3])}>
+            Reset
+          </button>
+        </div>
+        
+        <div style={{ 
+          marginTop: '2rem',
+          padding: '1rem',
+          border: '1px solid #ccc',
+          borderRadius: '8px',
+          backgroundColor: '#f9fafb'
+        }}>
+          <MotionSequence layoutTransition={{ duration: 300, easing: 'cubic-bezier(0.4, 0, 0.2, 1)' }}>
+            {items.map((item, index) => (
+              <MotionStage
+                key={item}
+                layoutTransition={true}
+                style={{
+                  marginBottom: index < items.length - 1 ? '0.5rem' : 0,
+                }}
+              >
+                <div
+                  style={{
+                    padding: '1rem',
+                    background: 'var(--cascade-color-primary)',
+                    borderRadius: '8px',
+                    color: 'white',
+                    fontWeight: 'bold',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'space-between',
+                  }}
+                >
+                  <span>Item {item}</span>
+                  <span style={{ fontSize: '0.875rem', opacity: 0.8 }}>
+                    Position: {index + 1}
+                  </span>
+                </div>
+              </MotionStage>
+            ))}
+          </MotionSequence>
+        </div>
+      </section>
+      
+      <section style={{ marginTop: '2rem' }}>
+        <h3>Layout Transition with Expand/Collapse</h3>
+        <p>
+          Combine layout transitions with size changes for smooth expand/collapse animations.
+        </p>
+        
+        <div style={{ marginTop: '1rem' }}>
+          <button onClick={() => setExpanded(!expanded)}>
+            {expanded ? 'Collapse' : 'Expand'} Card
+          </button>
+        </div>
+        
+        <div style={{ 
+          marginTop: '2rem',
+          padding: '1rem',
+          border: '1px solid #ccc',
+          borderRadius: '8px',
+          backgroundColor: '#f9fafb'
+        }}>
+          <MotionSequence layoutTransition={{ duration: 400, origin: 'top-left' }}>
+            <MotionStage
+              layoutTransition={true}
+              style={{
+                width: expanded ? '100%' : '200px',
+                height: expanded ? '300px' : '100px',
+              }}
+            >
+              <div
+                style={{
+                  width: '100%',
+                  height: '100%',
+                  padding: '1rem',
+                  background: 'var(--cascade-color-primary)',
+                  borderRadius: '8px',
+                  color: 'white',
+                  display: 'flex',
+                  flexDirection: 'column',
+                  justifyContent: expanded ? 'flex-start' : 'center',
+                  alignItems: expanded ? 'flex-start' : 'center',
+                }}
+              >
+                <h4 style={{ margin: 0, marginBottom: expanded ? '1rem' : 0 }}>
+                  {expanded ? 'Expanded Card' : 'Click to expand'}
+                </h4>
+                {expanded && (
+                  <div>
+                    <p style={{ margin: 0, marginBottom: '0.5rem' }}>
+                      This card expands and contracts smoothly with layout transitions enabled.
+                    </p>
+                    <p style={{ margin: 0 }}>
+                      The layout transition animates the size change, making it feel natural.
+                    </p>
+                  </div>
+                )}
+              </div>
+            </MotionStage>
+          </MotionSequence>
+        </div>
+      </section>
+      
+      <section style={{ marginTop: '2rem' }}>
+        <h3>Per-Stage Layout Transition Configuration</h3>
+        <p>
+          Each stage can have its own layout transition configuration, or inherit
+          from the parent MotionSequence.
+        </p>
+        
+        <div style={{ 
+          marginTop: '2rem',
+          padding: '1rem',
+          border: '1px solid #ccc',
+          borderRadius: '8px',
+          backgroundColor: '#f9fafb',
+          display: 'flex',
+          gap: '1rem',
+          flexWrap: 'wrap'
+        }}>
+          <MotionSequence layoutTransition={{ duration: 300 }}>
+            <MotionStage
+              layoutTransition={true}
+              style={{
+                width: '100px',
+                height: '100px',
+                background: 'var(--cascade-color-primary)',
+                borderRadius: '8px',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                color: 'white',
+                fontWeight: 'bold'
+              }}
+            >
+              Default
+            </MotionStage>
+            
+            <MotionStage
+              layoutTransition={{ duration: 600, easing: 'ease-in-out' }}
+              style={{
+                width: '100px',
+                height: '100px',
+                background: 'var(--cascade-color-blue-500)',
+                borderRadius: '8px',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                color: 'white',
+                fontWeight: 'bold'
+              }}
+            >
+              Slow
+            </MotionStage>
+            
+            <MotionStage
+              layoutTransition={{ duration: 200, origin: 'top-right' }}
+              style={{
+                width: '100px',
+                height: '100px',
+                background: 'var(--cascade-color-green-500)',
+                borderRadius: '8px',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                color: 'white',
+                fontWeight: 'bold'
+              }}
+            >
+              Fast
+            </MotionStage>
+          </MotionSequence>
+        </div>
+        
+        <details style={{ marginTop: '1rem' }}>
+          <summary>Code Example</summary>
+          <pre style={{ 
+            marginTop: '0.5rem', 
+            padding: '1rem', 
+            backgroundColor: '#f3f4f6', 
+            borderRadius: '8px',
+            overflow: 'auto',
+            fontSize: '0.875rem'
+          }}>
+{`<MotionSequence layoutTransition={{ duration: 300 }}>
+  {/* Inherits duration: 300 */}
+  <MotionStage animation={anim} layoutTransition={true} />
+  
+  {/* Overrides with custom config */}
+  <MotionStage 
+    animation={anim} 
+    layoutTransition={{ duration: 600, easing: 'ease-in-out' }} 
+  />
+  
+  {/* Different origin point */}
+  <MotionStage 
+    animation={anim} 
+    layoutTransition={{ duration: 200, origin: 'top-right' }} 
+  />
+</MotionSequence>`}
           </pre>
         </details>
       </section>

@@ -1,0 +1,44 @@
+{
+  "name": "@cascade/motion-gestures",
+  "version": "0.1.0",
+  "description": "Gesture-driven animations for Cascade Motion",
+  "main": "./dist/index.js",
+  "module": "./dist/index.mjs",
+  "types": "./dist/index.d.ts",
+  "source": "./src/index.ts",
+  "exports": {
+    ".": {
+      "source": "./src/index.ts",
+      "import": "./dist/index.mjs",
+      "require": "./dist/index.js",
+      "types": "./dist/index.d.ts",
+      "default": "./src/index.ts"
+    }
+  },
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "build": "tsc",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run",
+    "test:watch": "vitest"
+  },
+  "dependencies": {
+    "@cascade/motion-runtime": "workspace:*",
+    "@cascade/compiler": "workspace:*"
+  },
+  "devDependencies": {
+    "@types/react": "^18.0.0",
+    "@testing-library/react": "^14.1.2",
+    "@testing-library/jest-dom": "^6.1.5",
+    "@vitest/ui": "^1.1.0",
+    "jsdom": "^23.0.1",
+    "typescript": "^5.3.3",
+    "vitest": "^1.1.0"
+  },
+  "peerDependencies": {
+    "react": "^18.0.0"
+  }
+}
+

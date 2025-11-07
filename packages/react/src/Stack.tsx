@@ -54,8 +54,22 @@ export const Stack = forwardRef<HTMLElement, StackProps>(
     // Resolve spacing token
     const gap = tokens.space[spacing];
     
-    // Generate responsive data-attributes
-    const dataResponsive = responsive ? JSON.stringify(responsive) : undefined;
+    // Generate responsive data-attributes for CSS selectors
+    const responsiveAttrs: string[] = [];
+    if (responsive) {
+      for (const [breakpoint, overrides] of Object.entries(responsive)) {
+        if (overrides.spacing) {
+          responsiveAttrs.push(`${breakpoint}:spacing-${overrides.spacing}`);
+        }
+        if (overrides.align) {
+          responsiveAttrs.push(`${breakpoint}:align-${overrides.align}`);
+        }
+        if (overrides.justify) {
+          responsiveAttrs.push(`${breakpoint}:justify-${overrides.justify}`);
+        }
+      }
+    }
+    const dataResponsive = responsiveAttrs.length > 0 ? responsiveAttrs.join(' ') : undefined;
     
     // Build className with alignment utilities
     const alignClass = align === 'start' ? stackStyles.alignStart :

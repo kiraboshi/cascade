@@ -32,5 +32,5 @@ pnpm dev
 
 ## Development
 
-See [IMPLEMENTATION_PLAN.md](./IMPLEMENTATION_PLAN.md) for detailed implementation specifications.
+See [plans/completed/foundation.md](./plans/completed/foundation.md) for detailed implementation specifications.
 

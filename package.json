@@ -7,13 +7,19 @@
     "build": "pnpm -r --filter './packages/*' build",
     "dev": "pnpm --filter demo dev",
     "test": "pnpm -r --filter './packages/*' test",
+    "test:watch": "pnpm -r --filter './packages/*' test:watch",
+    "test:ui": "vitest --ui",
     "lint": "pnpm -r --filter './packages/*' lint",
     "typecheck": "pnpm -r --filter './packages/*' typecheck",
     "clean": "pnpm -r exec rm -rf dist node_modules"
   },
   "devDependencies": {
+    "@testing-library/jest-dom": "^6.9.1",
+    "@testing-library/react": "^14.3.1",
     "@types/node": "^20.10.0",
-    "typescript": "^5.3.3"
+    "@vitest/ui": "^1.1.0",
+    "typescript": "^5.3.3",
+    "vitest": "^1.1.0"
   },
   "engines": {
     "node": ">=18.0.0",
