@@ -29,11 +29,61 @@ export interface ClusterProps extends Omit<HTMLAttributes<HTMLDivElement>, 'styl
    * When enabled, changes to spacing, justify will be smoothly animated.
    */
   animate?: boolean | LayoutTransitionConfig;
+  
+  // Accessibility (ARIA)
+  /**
+   * ARIA label for the cluster.
+   * Provides an accessible name for screen readers.
+   */
+  ariaLabel?: string;
+  /**
+   * ID of element that labels this cluster.
+   */
+  ariaLabelledBy?: string;
+  /**
+   * ID of element that describes this cluster.
+   */
+  ariaDescribedBy?: string;
+  /**
+   * ARIA role for the cluster.
+   */
+  role?: string;
+  /**
+   * ARIA live region politeness level.
+   * Use "polite" or "assertive" to announce cluster changes to screen readers.
+   */
+  ariaLive?: 'off' | 'polite' | 'assertive';
+  /**
+   * Whether the entire cluster should be announced when it changes.
+   */
+  ariaAtomic?: boolean;
+  /**
+   * Whether the cluster is currently busy/loading.
+   */
+  ariaBusy?: boolean;
+  
   as?: keyof JSX.IntrinsicElements;
 }
 
 export const Cluster = forwardRef<HTMLElement, ClusterProps>(
-  ({ spacing, justify = 'start', detectWrapping = false, animate, as: Component = 'div', style, className, children, ...props }, ref) => {
+  ({ 
+    spacing, 
+    justify = 'start', 
+    detectWrapping = false, 
+    animate, 
+    ariaLabel,
+    ariaLabelledBy,
+    ariaDescribedBy,
+    role,
+    ariaLive,
+    ariaAtomic,
+    ariaBusy,
+    as: Component = 'div', 
+    style, 
+    className, 
+    children, 
+    ...props 
+  }, ref) => {
     const internalRef = useRef<HTMLElement>(null);
     const childRefsRef = useRef<React.RefObject<HTMLElement>[]>([]);
     const combinedRef = (ref || internalRef) as React.RefObject<HTMLElement>;
@@ -127,6 +177,13 @@ export const Cluster = forwardRef<HTMLElement, ClusterProps>(
                                'space-between',
           ...style,
         } as React.CSSProperties}
+        aria-label={ariaLabel}
+        aria-labelledby={ariaLabelledBy}
+        aria-describedby={ariaDescribedBy}
+        role={role}
+        aria-live={ariaLive}
+        aria-atomic={ariaAtomic}
+        aria-busy={ariaBusy}
         {...props}
       >
         {childrenWithRefs}

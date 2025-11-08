@@ -53,9 +53,11 @@ export const tokens = {
     },
     layout: {
         breakpoint: {
+            xs: '20rem',
             sm: '40rem',
             md: '64rem',
             lg: '80rem',
+            xl: '90rem',
         },
     },
 };

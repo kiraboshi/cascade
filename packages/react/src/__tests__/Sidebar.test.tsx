@@ -103,5 +103,109 @@ describe('Sidebar', () => {
     expect(container.textContent).toContain('Sidebar');
     expect(container.textContent).toContain('Content');
   });
+
+  it('should include the sidebar class for foundation styles', () => {
+    const { container } = render(
+      <Sidebar sidebarWidth="20rem">
+        <div>Sidebar</div>
+        <div>Content</div>
+      </Sidebar>
+    );
+    const element = container.firstChild as HTMLElement;
+    expect(element.classList.contains('sidebar')).toBe(true);
+  });
+
+  describe('containerQueries', () => {
+    it('should set CSS variables for minWidth container queries', () => {
+      const { container } = render(
+        <Sidebar
+          sidebarWidth="20rem"
+          containerQueries={{
+            minWidth: {
+              '50rem': { sidebarWidth: '25rem', gap: 'lg' },
+            },
+          }}
+        >
+          <div>Sidebar</div>
+          <div>Content</div>
+        </Sidebar>
+      );
+      
+      const element = container.firstChild as HTMLElement;
+      
+      // Should set CSS variables for container query breakpoints
+      expect(element.style.getPropertyValue('--sidebar-template-columns-50rem')).toBeTruthy();
+      expect(element.style.getPropertyValue('--sidebar-gap-50rem')).toBeTruthy();
+    });
+
+    it('should set CSS variables for maxWidth container queries', () => {
+      const { container } = render(
+        <Sidebar
+          sidebarWidth="20rem"
+          containerQueries={{
+            maxWidth: {
+              '40rem': { sidebarWidth: '0' },
+            },
+          }}
+        >
+          <div>Sidebar</div>
+          <div>Content</div>
+        </Sidebar>
+      );
+      
+      const element = container.firstChild as HTMLElement;
+      
+      // Should set CSS variables for max-width container queries
+      expect(element.style.getPropertyValue('--sidebar-template-columns-max-40rem')).toBeTruthy();
+    });
+
+    it('should maintain backward compatibility with responsive prop', () => {
+      const { container } = render(
+        <Sidebar
+          sidebarWidth="20rem"
+          responsive={{ sm: { gap: 'lg' } }}
+          containerQueries={{
+            minWidth: {
+              '50rem': { sidebarWidth: '25rem' },
+            },
+          }}
+        >
+          <div>Sidebar</div>
+          <div>Content</div>
+        </Sidebar>
+      );
+      
+      const element = container.firstChild as HTMLElement;
+      
+      // Should have both responsive data attribute and container query variables
+      expect(element.getAttribute('data-responsive')).toBeTruthy();
+      expect(element.style.getPropertyValue('--sidebar-template-columns-50rem')).toBeTruthy();
+    });
+
+    it('should handle both minWidth and maxWidth container queries', () => {
+      const { container } = render(
+        <Sidebar
+          sidebarWidth="20rem"
+          containerQueries={{
+            minWidth: {
+              '50rem': { sidebarWidth: '25rem' },
+            },
+            maxWidth: {
+              '30rem': { sidebarWidth: '0' },
+            },
+          }}
+        >
+          <div>Sidebar</div>
+          <div>Content</div>
+        </Sidebar>
+      );
+      
+      const element = container.firstChild as HTMLElement;
+      
+      // Should set variables for both min and max width queries
+      expect(element.style.getPropertyValue('--sidebar-template-columns-50rem')).toBeTruthy();
+      expect(element.style.getPropertyValue('--sidebar-template-columns-max-30rem')).toBeTruthy();
+    });
+  });
 });
 

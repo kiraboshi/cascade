@@ -74,6 +74,38 @@ export interface CoverProps extends Omit<HTMLAttributes<HTMLDivElement>, 'style'
   // Responsive
   responsive?: Record<string, Partial<Omit<CoverProps, 'responsive' | 'animate' | 'centered' | 'header' | 'footer' | 'children'>>>;
   
+  // Accessibility (ARIA)
+  /**
+   * ARIA label for the cover layout.
+   * Provides an accessible name for screen readers.
+   */
+  ariaLabel?: string;
+  /**
+   * ID of element that labels this cover layout.
+   */
+  ariaLabelledBy?: string;
+  /**
+   * ID of element that describes this cover layout.
+   */
+  ariaDescribedBy?: string;
+  /**
+   * ARIA role for the cover layout.
+   */
+  role?: string;
+  /**
+   * ARIA live region politeness level.
+   * Use "polite" or "assertive" to announce cover changes to screen readers.
+   */
+  ariaLive?: 'off' | 'polite' | 'assertive';
+  /**
+   * Whether the entire cover layout should be announced when it changes.
+   */
+  ariaAtomic?: boolean;
+  /**
+   * Whether the cover layout is currently busy/loading.
+   */
+  ariaBusy?: boolean;
+  
   // Polymorphic
   as?: keyof JSX.IntrinsicElements;
 }
@@ -104,6 +136,13 @@ export const Cover = forwardRef<HTMLElement, CoverProps>(
     padding,
     animate,
     responsive,
+    ariaLabel,
+    ariaLabelledBy,
+    ariaDescribedBy,
+    role,
+    ariaLive,
+    ariaAtomic,
+    ariaBusy,
     as: Component = 'div', 
     style, 
     className,
@@ -163,6 +202,13 @@ export const Cover = forwardRef<HTMLElement, CoverProps>(
           ...style,
         } as React.CSSProperties}
         data-responsive={dataResponsive}
+        aria-label={ariaLabel}
+        aria-labelledby={ariaLabelledBy}
+        aria-describedby={ariaDescribedBy}
+        role={role}
+        aria-live={ariaLive}
+        aria-atomic={ariaAtomic}
+        aria-busy={ariaBusy}
         {...props}
       >
         {header && (

@@ -51,19 +51,165 @@ function generateBaseLayer(): string {
     :root {
       font-family: var(--cascade-typography-font-family-sans);
       color: oklch(0.20 0 0);
+      --cascade-color-text: oklch(0.20 0 0);
+      --cascade-color-background: oklch(1 0 0);
     }
     
     body {
       font-size: var(--cascade-typography-font-size-base);
       color: inherit;
+      background: var(--cascade-color-background);
+    }
+    
+    /* Enhanced focus indicators for accessibility */
+    :focus-visible {
+      outline: 2px solid var(--cascade-color-primary, oklch(0.637 0.237 25.331));
+      outline-offset: 2px;
+      border-radius: 2px;
+    }
+    
+    /* Focus indicators for layout primitives */
+    .grid:focus-visible,
+    .sidebar:focus-visible,
+    .split:focus-visible,
+    .stack:focus-visible,
+    .cluster:focus-visible,
+    .box:focus-visible,
+    .center:focus-visible,
+    .flex:focus-visible,
+    .switcher:focus-visible,
+    .reel:focus-visible,
+    .cover:focus-visible,
+    .imposter:focus-visible,
+    .frame:focus-visible {
+      outline: 2px solid var(--cascade-color-primary, oklch(0.637 0.237 25.331));
+      outline-offset: 2px;
+    }
+    
+    /* High contrast mode support */
+    @media (prefers-contrast: high) {
+      :focus-visible {
+        outline: 3px solid;
+        outline-offset: 3px;
+      }
+      
+      .grid:focus-visible,
+      .sidebar:focus-visible,
+      .split:focus-visible,
+      .stack:focus-visible,
+      .cluster:focus-visible,
+      .box:focus-visible,
+      .center:focus-visible,
+      .flex:focus-visible,
+      .switcher:focus-visible,
+      .reel:focus-visible,
+      .cover:focus-visible,
+      .imposter:focus-visible,
+      .frame:focus-visible {
+        outline: 3px solid;
+        outline-offset: 3px;
+      }
+      
+      /* High contrast borders for layout primitives */
+      .grid,
+      .sidebar,
+      .split,
+      .stack,
+      .cluster,
+      .box,
+      .center,
+      .flex,
+      .switcher,
+      .reel,
+      .cover,
+      .imposter,
+      .frame {
+        border: 2px solid currentColor;
+      }
+    }
+    
+    /* Screen reader only class for live regions */
+    .sr-only {
+      position: absolute;
+      width: 1px;
+      height: 1px;
+      padding: 0;
+      margin: -1px;
+      overflow: hidden;
+      clip: rect(0, 0, 0, 0);
+      white-space: nowrap;
+      border-width: 0;
+    }
+    
+    /* Skip link support */
+    .skip-link {
+      position: absolute;
+      top: -40px;
+      left: 0;
+      background: var(--cascade-color-primary, oklch(0.637 0.237 25.331));
+      color: white;
+      padding: 8px 16px;
+      z-index: 100;
+      text-decoration: none;
+      border-radius: 0 0 4px 0;
+    }
+    
+    .skip-link:focus {
+      top: 0;
     }
   `;
+}
+
+/**
+ * Generate container query CSS rules for common breakpoints
+ * Uses pure CSS container queries - no data attributes needed
+ * 
+ * How it works:
+ * 1. Component sets CSS variables like --grid-columns-30rem inline when props specify that breakpoint
+ * 2. Container query checks container size and uses the appropriate variable
+ * 3. For min-width queries: check current breakpoint var, then smaller breakpoint vars, then base
+ * 4. This ensures larger breakpoints don't override smaller ones when the larger var isn't set
+ */
+function generateContainerQueryCSS(componentName: string, propertyName: string, breakpoints: string[]): string {
+  // Sort breakpoints numerically (smallest to largest)
+  const sortedBreakpoints = [...breakpoints].sort((a, b) => {
+    const aNum = parseFloat(a);
+    const bNum = parseFloat(b);
+    return aNum - bNum;
+  });
+  
+  return sortedBreakpoints.map((width, index) => {
+    const normalizedWidth = width.replace(/\s+/g, '-');
+    
+    // Build fallback chain: check current breakpoint var, then smaller breakpoints, then base
+    // This ensures that if a larger breakpoint query fires but its var isn't set,
+    // it falls back to smaller breakpoint vars that might be set
+    // Use --${propertyName}-base for the base fallback to avoid conflicts with inline --${propertyName}
+    // NOTE: Don't include var(--${propertyName}) in the fallback chain as it creates a circular reference
+    // The base rule already sets --${propertyName} from --${propertyName}-base
+    let fallbackChain = `var(--${propertyName}-base)`; // Base fallback - no circular reference
+    for (let i = index - 1; i >= 0; i--) {
+      const smallerWidth = sortedBreakpoints[i].replace(/\s+/g, '-');
+      fallbackChain = `var(--${propertyName}-${smallerWidth}, ${fallbackChain})`;
+    }
+    
+    return `
+    @container (min-width: ${width}) {
+      .${componentName} {
+        --${propertyName}: var(--${propertyName}-${normalizedWidth}, ${fallbackChain});
+      }
+    }`;
+  }).join('\n');
 }
 
 /**
  * Generate layout primitives CSS
  */
 function generateLayoutsLayer(): string {
+  // Common container query breakpoints (sorted for proper cascading)
+  // These are the breakpoints that will have CSS container query rules generated
+  const containerBreakpoints = ['20rem', '30rem', '40rem', '50rem', '60rem', '70rem'];
+  
   return `
     .stack {
       display: flex;
@@ -110,6 +256,8 @@ function generateLayoutsLayer(): string {
     
     .grid {
       display: grid;
+      /* NOTE: container-type removed - parent elements should be containers, not Grid itself
+         Container queries check the nearest ancestor container, so Grid queries its parent's size */
       gap: var(--grid-gap, 0);
       grid-template-columns: var(--grid-columns, repeat(3, 1fr));
       grid-template-rows: var(--grid-rows, none);
@@ -118,6 +266,17 @@ function generateLayoutsLayer(): string {
       align-content: var(--grid-align-content, start);
       justify-content: var(--grid-justify-content, start);
     }
+    
+    /* Set initial --grid-columns from --grid-columns-base when base is set.
+       This handles containers smaller than the smallest breakpoint.
+       Container queries will override this when they fire.
+       If --grid-columns-base is not set, this rule does nothing (--grid-columns keeps its default). */
+    .grid {
+      --grid-columns: var(--grid-columns-base);
+    }
+    
+    ${generateContainerQueryCSS('grid', 'grid-columns', containerBreakpoints)}
+    ${generateContainerQueryCSS('grid', 'grid-gap', containerBreakpoints)}
     
     .center {
       margin-left: auto;
@@ -133,6 +292,7 @@ function generateLayoutsLayer(): string {
     
     .sidebar {
       display: grid;
+      container-type: inline-size;
       grid-template-columns: var(--sidebar-template-columns);
       gap: var(--sidebar-gap, 0);
       align-items: var(--sidebar-align-items, stretch);
@@ -142,8 +302,12 @@ function generateLayoutsLayer(): string {
       grid-template-columns: var(--sidebar-template-columns);
     }
     
+    ${generateContainerQueryCSS('sidebar', 'sidebar-template-columns', containerBreakpoints)}
+    ${generateContainerQueryCSS('sidebar', 'sidebar-gap', containerBreakpoints)}
+    
     .split {
       display: grid;
+      container-type: inline-size;
       grid-template-columns: var(--split-template-columns);
       gap: var(--split-gap, 0);
       align-items: var(--split-align, stretch);
@@ -152,6 +316,9 @@ function generateLayoutsLayer(): string {
     .split[data-switch-to="stack"] {
       grid-template-columns: 1fr;
     }
+    
+    ${generateContainerQueryCSS('split', 'split-template-columns', containerBreakpoints)}
+    ${generateContainerQueryCSS('split', 'split-gap', containerBreakpoints)}
     
     @media (max-width: 768px) {
       .split[data-switch-to="stack"] {
@@ -336,4 +503,3 @@ export function generateFoundationCSS(): string {
   
   return `${layerDeclarations}\n\n${layerContent}`;
 }
-

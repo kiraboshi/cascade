@@ -52,11 +52,62 @@ export interface StackProps extends Omit<HTMLAttributes<HTMLDivElement>, 'style'
    */
   animate?: boolean | LayoutTransitionConfig;
   responsive?: Record<string, Partial<Omit<StackProps, 'responsive' | 'animate'>>>;
+  
+  // Accessibility (ARIA)
+  /**
+   * ARIA label for the stack.
+   * Provides an accessible name for screen readers.
+   */
+  ariaLabel?: string;
+  /**
+   * ID of element that labels this stack.
+   */
+  ariaLabelledBy?: string;
+  /**
+   * ID of element that describes this stack.
+   */
+  ariaDescribedBy?: string;
+  /**
+   * ARIA role for the stack.
+   */
+  role?: string;
+  /**
+   * ARIA live region politeness level.
+   * Use "polite" or "assertive" to announce stack changes to screen readers.
+   */
+  ariaLive?: 'off' | 'polite' | 'assertive';
+  /**
+   * Whether the entire stack should be announced when it changes.
+   */
+  ariaAtomic?: boolean;
+  /**
+   * Whether the stack is currently busy/loading.
+   */
+  ariaBusy?: boolean;
+  
   as?: keyof JSX.IntrinsicElements;
 }
 
 export const Stack = forwardRef<HTMLElement, StackProps>(
-  ({ spacing, align = 'stretch', justify = 'start', animate, responsive, as: Component = 'div', style, className, children, ...props }, ref) => {
+  ({ 
+    spacing, 
+    align = 'stretch', 
+    justify = 'start', 
+    animate, 
+    responsive, 
+    ariaLabel,
+    ariaLabelledBy,
+    ariaDescribedBy,
+    role,
+    ariaLive,
+    ariaAtomic,
+    ariaBusy,
+    as: Component = 'div', 
+    style, 
+    className, 
+    children, 
+    ...props 
+  }, ref) => {
     // Internal ref for layout transitions
     const internalRef = useRef<HTMLElement>(null);
     const childRefsRef = useRef<React.RefObject<HTMLElement>[]>([]);
@@ -167,6 +218,13 @@ export const Stack = forwardRef<HTMLElement, StackProps>(
           ...style,
         } as React.CSSProperties}
         data-responsive={dataResponsive}
+        aria-label={ariaLabel}
+        aria-labelledby={ariaLabelledBy}
+        aria-describedby={ariaDescribedBy}
+        role={role}
+        aria-live={ariaLive}
+        aria-atomic={ariaAtomic}
+        aria-busy={ariaBusy}
         {...props}
       >
         {childrenWithRefs}

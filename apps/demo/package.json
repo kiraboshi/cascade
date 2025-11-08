@@ -17,7 +17,8 @@
     "@cascade/motion-gestures": "workspace:*",
     "@stylexjs/stylex": "^0.7.0",
     "react": "^18.2.0",
-    "react-dom": "^18.2.0"
+    "react-dom": "^18.2.0",
+    "react-router-dom": "^6.21.0"
   },
   "devDependencies": {
     "@stylexjs/babel-plugin": "^0.7.0",

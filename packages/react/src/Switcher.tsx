@@ -7,6 +7,7 @@ import { forwardRef, useRef, useMemo, useEffect, useState, Children, cloneElemen
 import * as stylex from '@stylexjs/stylex';
 import { tokens, type SpaceToken } from '@cascade/tokens';
 import { useLayoutTransition, useBatchLayoutTransition, type LayoutTransitionConfig } from '@cascade/motion-runtime';
+import { useArrowKeyNavigation } from './accessibility';
 
 const switcherStyles = stylex.create({
   base: {
@@ -55,6 +56,45 @@ export interface SwitcherProps extends Omit<HTMLAttributes<HTMLDivElement>, 'sty
   
   // Responsive
   responsive?: Record<string, Partial<Omit<SwitcherProps, 'responsive' | 'animate'>>>;
+  
+  // Accessibility (ARIA)
+  /**
+   * ARIA label for the switcher.
+   * Provides an accessible name for screen readers.
+   */
+  ariaLabel?: string;
+  /**
+   * ID of element that labels this switcher.
+   */
+  ariaLabelledBy?: string;
+  /**
+   * ID of element that describes this switcher.
+   */
+  ariaDescribedBy?: string;
+  /**
+   * ARIA role for the switcher.
+   */
+  role?: string;
+  /**
+   * ARIA live region politeness level.
+   * Use "polite" or "assertive" to announce layout changes to screen readers.
+   */
+  ariaLive?: 'off' | 'polite' | 'assertive';
+  /**
+   * Whether the entire switcher should be announced when it changes.
+   */
+  ariaAtomic?: boolean;
+  /**
+   * Whether the switcher is currently busy/loading.
+   */
+  ariaBusy?: boolean;
+  
+  // Keyboard navigation
+  /**
+   * Enable keyboard navigation for switcher items.
+   * When enabled, arrow keys navigate items, Enter/Space activate, Home/End jump to first/last.
+   */
+  keyboardNavigation?: boolean;
   
   // Polymorphic
   as?: keyof JSX.IntrinsicElements;
@@ -110,6 +150,14 @@ export const Switcher = forwardRef<HTMLElement, SwitcherProps>(
     justify = 'start',
     animate,
     responsive,
+    ariaLabel,
+    ariaLabelledBy,
+    ariaDescribedBy,
+    role,
+    ariaLive,
+    ariaAtomic,
+    ariaBusy,
+    keyboardNavigation = false,
     as: Component = 'div', 
     style, 
     className,
@@ -120,6 +168,12 @@ export const Switcher = forwardRef<HTMLElement, SwitcherProps>(
     const internalRef = useRef<HTMLElement>(null);
     const childRefsRef = useRef<React.RefObject<HTMLElement>[]>([]);
     const [isBelowThreshold, setIsBelowThreshold] = useState(false);
+    
+    // Keyboard navigation - orientation changes based on threshold
+    useArrowKeyNavigation(internalRef, keyboardNavigation, {
+      orientation: isBelowThreshold ? 'vertical' : 'horizontal',
+      wrap: false,
+    });
     
     // Apply layout transition if animation is enabled
     const layoutTransitionConfig: LayoutTransitionConfig | undefined = animate
@@ -344,6 +398,13 @@ export const Switcher = forwardRef<HTMLElement, SwitcherProps>(
         data-threshold={threshold}
         data-limit={limit}
         data-below-threshold={isBelowThreshold ? 'true' : undefined}
+        aria-label={ariaLabel}
+        aria-labelledby={ariaLabelledBy}
+        aria-describedby={ariaDescribedBy}
+        role={role}
+        aria-live={ariaLive}
+        aria-atomic={ariaAtomic}
+        aria-busy={ariaBusy}
         {...props}
       >
         {childrenWithRefs}

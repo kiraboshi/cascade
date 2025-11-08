@@ -106,5 +106,131 @@ describe('Split', () => {
     expect(container.textContent).toContain('Left');
     expect(container.textContent).toContain('Right');
   });
+
+  it('should include the split class for foundation container queries', () => {
+    const { container } = render(
+      <Split fraction="1/2">
+        <div>Left</div>
+        <div>Right</div>
+      </Split>
+    );
+    const element = container.firstChild as HTMLElement;
+    expect(element.classList.contains('split')).toBe(true);
+  });
+
+  describe('containerQueries', () => {
+    it('should set CSS variables for minWidth container queries', () => {
+      const { container } = render(
+        <Split
+          fraction="1/2"
+          containerQueries={{
+            minWidth: {
+              '40rem': { fraction: '1/3', gutter: 'lg' },
+            },
+          }}
+        >
+          <div>Left</div>
+          <div>Right</div>
+        </Split>
+      );
+      
+      const element = container.firstChild as HTMLElement;
+      
+      // Should set CSS variables for container query breakpoints
+      expect(element.style.getPropertyValue('--split-template-columns-40rem')).toBeTruthy();
+      expect(element.style.getPropertyValue('--split-gap-40rem')).toBeTruthy();
+    });
+
+    it('should set CSS variables for maxWidth container queries with stack behavior', () => {
+      const { container } = render(
+        <Split
+          fraction="1/2"
+          containerQueries={{
+            maxWidth: {
+              '30rem': { switchTo: 'stack' },
+            },
+          }}
+        >
+          <div>Left</div>
+          <div>Right</div>
+        </Split>
+      );
+      
+      const element = container.firstChild as HTMLElement;
+      
+      // When switchTo: 'stack' is used, it adds stack class but doesn't set template-columns variable
+      // The stacking is handled via CSS class, not CSS variable
+      expect(element.className).toContain('stack');
+    });
+
+    it('should maintain backward compatibility with responsive prop', () => {
+      const { container } = render(
+        <Split
+          fraction="1/2"
+          responsive={{ sm: { fraction: '1/3' } }}
+          containerQueries={{
+            minWidth: {
+              '40rem': { fraction: '2/3' },
+            },
+          }}
+        >
+          <div>Left</div>
+          <div>Right</div>
+        </Split>
+      );
+      
+      const element = container.firstChild as HTMLElement;
+      
+      // Should have both responsive data attribute and container query variables
+      expect(element.getAttribute('data-responsive')).toBeTruthy();
+      expect(element.style.getPropertyValue('--split-template-columns-40rem')).toBeTruthy();
+    });
+
+    it('should handle both minWidth and maxWidth container queries', () => {
+      const { container } = render(
+        <Split
+          fraction="1/2"
+          containerQueries={{
+            minWidth: {
+              '40rem': { fraction: '1/3' },
+            },
+            maxWidth: {
+              '20rem': { fraction: '1/4' },
+            },
+          }}
+        >
+          <div>Left</div>
+          <div>Right</div>
+        </Split>
+      );
+      
+      const element = container.firstChild as HTMLElement;
+      
+      // Should set variables for both min and max width queries
+      expect(element.style.getPropertyValue('--split-template-columns-40rem')).toBeTruthy();
+      expect(element.style.getPropertyValue('--split-template-columns-max-20rem')).toBeTruthy();
+    });
+
+    it('should handle stack behavior via container queries', () => {
+      const { container } = render(
+        <Split
+          fraction="1/2"
+          containerQueries={{
+            maxWidth: {
+              '30rem': { switchTo: 'stack' },
+            },
+          }}
+        >
+          <div>Left</div>
+          <div>Right</div>
+        </Split>
+      );
+      
+      const element = container.firstChild as HTMLElement;
+      
+      // When switchTo: 'stack' is used, it adds stack class for CSS-based stacking
+      expect(element.className).toContain('stack');
+    });
+  });
 });
 

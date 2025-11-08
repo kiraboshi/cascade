@@ -107,7 +107,76 @@
     inset: 0;
     object-fit: var(--frame-object-fit, cover);
   }
+  
+  .grid {
+    display: grid;
+    /* NOTE: container-type removed - parent elements should be containers, not Grid itself
+       Container queries check the nearest ancestor container, so Grid queries its parent's size */
+    width: 100%;
+    min-width: 0;
+    max-width: 100%;
+    box-sizing: border-box;
+    gap: var(--grid-gap, 0);
+    grid-template-columns: var(--grid-columns, repeat(3, 1fr));
+    grid-template-rows: var(--grid-rows, none);
+    align-items: var(--grid-align-items, stretch);
+    justify-items: var(--grid-justify-items, stretch);
+    align-content: var(--grid-align-content, start);
+    justify-content: var(--grid-justify-content, start);
+  }
+  
+  /* Set initial --grid-columns from --grid-columns-base when base is set.
+     This handles containers smaller than the smallest breakpoint.
+     Container queries will override this when they fire.
+     If --grid-columns-base is not set, this rule does nothing (--grid-columns keeps its default).
+     NOTE: This rule must come BEFORE container queries so they can override it. */
+  .grid {
+    --grid-columns: var(--grid-columns-base);
+  }
+  
+  @container (min-width: 20rem) {
+    .grid {
+      --grid-columns: var(--grid-columns-20rem, var(--grid-columns-base));
+      --grid-gap: var(--grid-gap-20rem, var(--grid-gap-base));
+    }
+  }
+  
+  @container (min-width: 30rem) {
+    .grid {
+      --grid-columns: var(--grid-columns-30rem, var(--grid-columns-20rem, var(--grid-columns-base)));
+      --grid-gap: var(--grid-gap-30rem, var(--grid-gap-20rem, var(--grid-gap-base)));
+    }
+  }
+  
+  @container (min-width: 40rem) {
+    .grid {
+      --grid-columns: var(--grid-columns-40rem, var(--grid-columns-30rem, var(--grid-columns-20rem, var(--grid-columns-base))));
+      --grid-gap: var(--grid-gap-40rem, var(--grid-gap-30rem, var(--grid-gap-20rem, var(--grid-gap-base))));
+    }
+  }
+  
+  @container (min-width: 50rem) {
+    .grid {
+      --grid-columns: var(--grid-columns-50rem, var(--grid-columns-40rem, var(--grid-columns-30rem, var(--grid-columns-20rem, var(--grid-columns-base)))));
+      --grid-gap: var(--grid-gap-50rem, var(--grid-gap-40rem, var(--grid-gap-30rem, var(--grid-gap-20rem, var(--grid-gap-base)))));
+    }
+  }
+  
+  @container (min-width: 60rem) {
+    .grid {
+      --grid-columns: var(--grid-columns-60rem, var(--grid-columns-50rem, var(--grid-columns-40rem, var(--grid-columns-30rem, var(--grid-columns-20rem, var(--grid-columns-base))))));
+      --grid-gap: var(--grid-gap-60rem, var(--grid-gap-50rem, var(--grid-gap-40rem, var(--grid-gap-30rem, var(--grid-gap-20rem, var(--grid-gap-base))))));
+    }
+  }
+  
+  @container (min-width: 70rem) {
+    .grid {
+      --grid-columns: var(--grid-columns-70rem, var(--grid-columns-60rem, var(--grid-columns-50rem, var(--grid-columns-40rem, var(--grid-columns-30rem, var(--grid-columns-20rem, var(--grid-columns-base)))))));
+      --grid-gap: var(--grid-gap-70rem, var(--grid-gap-60rem, var(--grid-gap-50rem, var(--grid-gap-40rem, var(--grid-gap-30rem, var(--grid-gap-20rem, var(--grid-gap-base)))))));
+    }
+  }
 }
+
 
 @layer utilities {
   .stack-align-start { align-items: flex-start; }

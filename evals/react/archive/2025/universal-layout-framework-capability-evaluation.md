@@ -1,16 +1,20 @@
 ---
 title: Universal Layout Framework Capability Evaluation
 type: evaluation
-status: draft
+status: archived
 created_at: 2025-01-13
+archived_at: 2025-01-13
 scope: react
 evaluator: ai-agent
 subject: Cascade's capabilities as a universal layout framework compared to its aspirations
 plan_reference: plans/pending/layout-primitives-uplift.md
 prior_eval_path: evals/react/layout-primitives-completeness-evaluation.md
 supersedes: evals/motion-runtime/layout-primitives-gap-analysis.md
+superseded_by: evals/react/universal-layout-framework-capability-evaluation.md
 delta_trend: positive
 delta_summary: Cascade has achieved comprehensive layout coverage, exceeding original goals with 13 primitives, full animation support, and comprehensive testing/documentation
+
+**NOTE**: This evaluation has been superseded by `universal-layout-framework-capability-evaluation.md` which reflects the completion of container query support and accessibility features.
 ---
 
 # Universal Layout Framework Capability Evaluation

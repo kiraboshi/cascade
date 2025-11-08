@@ -48,6 +48,38 @@ export interface CenterProps extends Omit<HTMLAttributes<HTMLDivElement>, 'style
   // Responsive
   responsive?: Record<string, Partial<Omit<CenterProps, 'responsive' | 'animate'>>>;
   
+  // Accessibility (ARIA)
+  /**
+   * ARIA label for the center container.
+   * Provides an accessible name for screen readers.
+   */
+  ariaLabel?: string;
+  /**
+   * ID of element that labels this center container.
+   */
+  ariaLabelledBy?: string;
+  /**
+   * ID of element that describes this center container.
+   */
+  ariaDescribedBy?: string;
+  /**
+   * ARIA role for the center container.
+   */
+  role?: string;
+  /**
+   * ARIA live region politeness level.
+   * Use "polite" or "assertive" to announce center changes to screen readers.
+   */
+  ariaLive?: 'off' | 'polite' | 'assertive';
+  /**
+   * Whether the entire center container should be announced when it changes.
+   */
+  ariaAtomic?: boolean;
+  /**
+   * Whether the center container is currently busy/loading.
+   */
+  ariaBusy?: boolean;
+  
   // Polymorphic
   as?: keyof JSX.IntrinsicElements;
 }
@@ -77,6 +109,13 @@ export const Center = forwardRef<HTMLElement, CenterProps>(
     padding,
     animate,
     responsive,
+    ariaLabel,
+    ariaLabelledBy,
+    ariaDescribedBy,
+    role,
+    ariaLive,
+    ariaAtomic,
+    ariaBusy,
     as: Component = 'div', 
     style, 
     className, 
@@ -148,6 +187,13 @@ export const Center = forwardRef<HTMLElement, CenterProps>(
           ...style,
         } as React.CSSProperties}
         data-responsive={dataResponsive}
+        aria-label={ariaLabel}
+        aria-labelledby={ariaLabelledBy}
+        aria-describedby={ariaDescribedBy}
+        role={role}
+        aria-live={ariaLive}
+        aria-atomic={ariaAtomic}
+        aria-busy={ariaBusy}
         {...props}
       />
     );

@@ -40,8 +40,52 @@ export interface SidebarProps extends Omit<HTMLAttributes<HTMLDivElement>, 'styl
    */
   animate?: boolean | LayoutTransitionConfig;
   
-  // Responsive
-  responsive?: Record<string, Partial<Omit<SidebarProps, 'responsive' | 'children' | 'animate'>>>;
+  // Responsive (viewport-based)
+  responsive?: Record<string, Partial<Omit<SidebarProps, 'responsive' | 'children' | 'animate' | 'containerQueries'>>>;
+  
+  // Container queries (container-based)
+  /**
+   * Container query support for responsive behavior based on container size.
+   * Use this instead of `responsive` when the component is nested in containers
+   * to ensure correct behavior.
+   */
+  containerQueries?: {
+    minWidth?: Record<string, Partial<Omit<SidebarProps, 'containerQueries' | 'responsive' | 'children' | 'animate'>>>;
+    maxWidth?: Record<string, Partial<Omit<SidebarProps, 'containerQueries' | 'responsive' | 'children' | 'animate'>>>;
+  };
+  
+  // Accessibility (ARIA)
+  /**
+   * ARIA label for the sidebar layout.
+   * Provides an accessible name for screen readers.
+   */
+  ariaLabel?: string;
+  /**
+   * ID of element that labels this sidebar.
+   */
+  ariaLabelledBy?: string;
+  /**
+   * ID of element that describes this sidebar.
+   */
+  ariaDescribedBy?: string;
+  /**
+   * ARIA role for the sidebar.
+   * Defaults to "complementary" for sidebars.
+   */
+  role?: string;
+  /**
+   * ARIA live region politeness level.
+   * Use "polite" or "assertive" to announce sidebar changes to screen readers.
+   */
+  ariaLive?: 'off' | 'polite' | 'assertive';
+  /**
+   * Whether the entire sidebar should be announced when it changes.
+   */
+  ariaAtomic?: boolean;
+  /**
+   * Whether the sidebar is currently busy/loading.
+   */
+  ariaBusy?: boolean;
   
   // Polymorphic
   as?: keyof JSX.IntrinsicElements;
@@ -79,6 +123,14 @@ export const Sidebar = forwardRef<HTMLElement, SidebarProps>(
     sidebarFirst = false,
     animate,
     responsive,
+    containerQueries,
+    ariaLabel,
+    ariaLabelledBy,
+    ariaDescribedBy,
+    role = 'complementary',
+    ariaLive,
+    ariaAtomic,
+    ariaBusy,
     as: Component = 'div', 
     style, 
     className,
@@ -124,7 +176,7 @@ export const Sidebar = forwardRef<HTMLElement, SidebarProps>(
     // Generate grid template
     const gridTemplate = generateGridTemplate(side, sidebarWidth, contentMin, noStretch);
     
-    // Generate responsive data-attributes for CSS selectors
+    // Generate responsive data-attributes for CSS selectors (viewport-based)
     const responsiveAttrs: string[] = [];
     let shouldStack = false;
     
@@ -143,6 +195,55 @@ export const Sidebar = forwardRef<HTMLElement, SidebarProps>(
       }
     }
     const dataResponsive = responsiveAttrs.length > 0 ? responsiveAttrs.join(' ') : undefined;
+    
+    // Generate CSS variables for container queries
+    // Container queries check container size directly - no data attributes needed
+    const containerQueryStyles: Record<string, string> = {};
+    
+    if (containerQueries?.minWidth) {
+      for (const [width, overrides] of Object.entries(containerQueries.minWidth)) {
+        const normalizedWidth = width.replace(/\s+/g, '-');
+        
+        // Set CSS variables that container queries will use
+        if (overrides.sidebarWidth !== undefined) {
+          const overrideTemplate = generateGridTemplate(
+            overrides.side ?? side,
+            overrides.sidebarWidth,
+            overrides.contentMin ?? contentMin,
+            overrides.noStretch ?? noStretch
+          );
+          containerQueryStyles[`--sidebar-template-columns-${normalizedWidth}`] = overrideTemplate;
+        }
+        if (overrides.gap) {
+          const gapValue = overrides.gap ? tokens.space[overrides.gap] : '0';
+          containerQueryStyles[`--sidebar-gap-${normalizedWidth}`] = gapValue;
+        }
+      }
+    }
+    if (containerQueries?.maxWidth) {
+      for (const [width, overrides] of Object.entries(containerQueries.maxWidth)) {
+        const normalizedWidth = width.replace(/\s+/g, '-');
+        
+        // Set CSS variables for max-width container queries
+        if (overrides.sidebarWidth !== undefined) {
+          const overrideTemplate = generateGridTemplate(
+            overrides.side ?? side,
+            overrides.sidebarWidth,
+            overrides.contentMin ?? contentMin,
+            overrides.noStretch ?? noStretch
+          );
+          containerQueryStyles[`--sidebar-template-columns-max-${normalizedWidth}`] = overrideTemplate;
+        }
+        if (overrides.gap) {
+          const gapValue = overrides.gap ? tokens.space[overrides.gap] : '0';
+          containerQueryStyles[`--sidebar-gap-max-${normalizedWidth}`] = gapValue;
+        }
+        // Check if stacking should occur
+        if (overrides.sidebarWidth === '0' || overrides.side === undefined) {
+          shouldStack = true;
+        }
+      }
+    }
     
     // Determine children order
     // Assume children[0] is sidebar, children[1] is content
@@ -179,10 +280,15 @@ export const Sidebar = forwardRef<HTMLElement, SidebarProps>(
       });
     }, [orderedChildren, animate, childRefs]);
     
-    const combinedClassName = stylex.props(
+    const stylexClassName = stylex.props(
       sidebarStyles.base,
       shouldStack && sidebarStyles.stack
-    ).className + (className ? ` ${className}` : '');
+    ).className;
+    const classNames = ['sidebar', stylexClassName];
+    if (className) {
+      classNames.push(className);
+    }
+    const combinedClassName = classNames.join(' ');
     
     // Merge refs
     const mergedRef = (element: HTMLElement | null) => {
@@ -202,10 +308,18 @@ export const Sidebar = forwardRef<HTMLElement, SidebarProps>(
           '--sidebar-template-columns': gridTemplate,
           '--sidebar-gap': gapValue,
           '--sidebar-align-items': 'stretch',
+          ...containerQueryStyles,
           ...style,
         } as React.CSSProperties}
         data-responsive={dataResponsive}
         data-side={side}
+        aria-label={ariaLabel}
+        aria-labelledby={ariaLabelledBy}
+        aria-describedby={ariaDescribedBy}
+        role={role}
+        aria-live={ariaLive}
+        aria-atomic={ariaAtomic}
+        aria-busy={ariaBusy}
         {...props}
       >
         {childrenWithRefs}

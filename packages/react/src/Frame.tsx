@@ -30,11 +30,59 @@ export interface FrameProps extends Omit<HTMLAttributes<HTMLDivElement>, 'style'
    */
   animate?: boolean | LayoutTransitionConfig;
   
+  // Accessibility (ARIA)
+  /**
+   * ARIA label for the frame.
+   * Provides an accessible name for screen readers.
+   */
+  ariaLabel?: string;
+  /**
+   * ID of element that labels this frame.
+   */
+  ariaLabelledBy?: string;
+  /**
+   * ID of element that describes this frame.
+   */
+  ariaDescribedBy?: string;
+  /**
+   * ARIA role for the frame.
+   */
+  role?: string;
+  /**
+   * ARIA live region politeness level.
+   * Use "polite" or "assertive" to announce frame changes to screen readers.
+   */
+  ariaLive?: 'off' | 'polite' | 'assertive';
+  /**
+   * Whether the entire frame should be announced when it changes.
+   */
+  ariaAtomic?: boolean;
+  /**
+   * Whether the frame is currently busy/loading.
+   */
+  ariaBusy?: boolean;
+  
   as?: keyof JSX.IntrinsicElements;
 }
 
 export const Frame = forwardRef<HTMLElement, FrameProps>(
-  ({ ratio, objectFit = 'cover', animate, as: Component = 'div', style, className, children, ...props }, ref) => {
+  ({ 
+    ratio, 
+    objectFit = 'cover', 
+    animate, 
+    ariaLabel,
+    ariaLabelledBy,
+    ariaDescribedBy,
+    role,
+    ariaLive,
+    ariaAtomic,
+    ariaBusy,
+    as: Component = 'div', 
+    style, 
+    className, 
+    children, 
+    ...props 
+  }, ref) => {
     // Internal ref for layout transitions
     const internalRef = useRef<HTMLElement>(null);
     
@@ -72,6 +120,13 @@ export const Frame = forwardRef<HTMLElement, FrameProps>(
           '--frame-object-fit': objectFit,
           ...style,
         } as React.CSSProperties}
+        aria-label={ariaLabel}
+        aria-labelledby={ariaLabelledBy}
+        aria-describedby={ariaDescribedBy}
+        role={role}
+        aria-live={ariaLive}
+        aria-atomic={ariaAtomic}
+        aria-busy={ariaBusy}
         {...props}
       >
         <div {...stylex.props(frameStyles.content)}>

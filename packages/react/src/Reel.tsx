@@ -6,6 +6,7 @@
 import { forwardRef, useRef, useMemo, Children, cloneElement, isValidElement, type HTMLAttributes, type ReactElement } from 'react';
 import { tokens, type SpaceToken } from '@cascade/tokens';
 import { useLayoutTransition, useBatchLayoutTransition, type LayoutTransitionConfig } from '@cascade/motion-runtime';
+import { useKeyboardScrolling } from './accessibility';
 
 export interface ReelProps extends Omit<HTMLAttributes<HTMLDivElement>, 'style'> {
   // Configuration
@@ -50,6 +51,59 @@ export interface ReelProps extends Omit<HTMLAttributes<HTMLDivElement>, 'style'>
   // Responsive
   responsive?: Record<string, Partial<Omit<ReelProps, 'responsive' | 'animate'>>>;
   
+  // Accessibility (ARIA)
+  /**
+   * ARIA label for the reel (scrollable region).
+   * Provides an accessible name for screen readers.
+   */
+  ariaLabel?: string;
+  /**
+   * ID of element that labels this reel.
+   */
+  ariaLabelledBy?: string;
+  /**
+   * ID of element that describes this reel.
+   */
+  ariaDescribedBy?: string;
+  /**
+   * ARIA role for the reel.
+   * Defaults to "region" for scrollable regions.
+   */
+  role?: string;
+  /**
+   * Orientation of the reel.
+   * Defaults to "horizontal" for horizontal scrolling.
+   */
+  ariaOrientation?: 'horizontal' | 'vertical';
+  /**
+   * ARIA live region politeness level.
+   * Use "polite" or "assertive" to announce reel changes to screen readers.
+   */
+  ariaLive?: 'off' | 'polite' | 'assertive';
+  /**
+   * Whether the entire reel should be announced when it changes.
+   */
+  ariaAtomic?: boolean;
+  /**
+   * Whether the reel is currently busy/loading.
+   */
+  ariaBusy?: boolean;
+  
+  // Keyboard navigation
+  /**
+   * Enable keyboard scrolling for the reel.
+   * When enabled, arrow keys scroll, Page Up/Down scroll larger amounts, Home/End scroll to start/end.
+   */
+  keyboardNavigation?: boolean;
+  /**
+   * Amount in pixels to scroll with arrow keys (default: 100).
+   */
+  keyboardScrollAmount?: number;
+  /**
+   * Amount in pixels to scroll with Page Up/Down (default: 400).
+   */
+  keyboardPageScrollAmount?: number;
+  
   // Polymorphic
   as?: keyof JSX.IntrinsicElements;
 }
@@ -77,6 +131,17 @@ export const Reel = forwardRef<HTMLElement, ReelProps>(
     scrollPadding,
     animate,
     responsive,
+    ariaLabel,
+    ariaLabelledBy,
+    ariaDescribedBy,
+    role = 'region',
+    ariaOrientation = 'horizontal',
+    ariaLive,
+    ariaAtomic,
+    ariaBusy,
+    keyboardNavigation = false,
+    keyboardScrollAmount = 100,
+    keyboardPageScrollAmount = 400,
     as: Component = 'div', 
     style, 
     className,
@@ -86,6 +151,13 @@ export const Reel = forwardRef<HTMLElement, ReelProps>(
     // Internal ref for layout transitions
     const internalRef = useRef<HTMLElement>(null);
     const childRefsRef = useRef<React.RefObject<HTMLElement>[]>([]);
+    
+    // Keyboard scrolling navigation
+    useKeyboardScrolling(internalRef, keyboardNavigation, {
+      orientation: ariaOrientation,
+      scrollAmount: keyboardScrollAmount,
+      pageScrollAmount: keyboardPageScrollAmount,
+    });
     
     // Apply layout transition if animation is enabled
     const layoutTransitionConfig: LayoutTransitionConfig | undefined = animate
@@ -236,6 +308,14 @@ export const Reel = forwardRef<HTMLElement, ReelProps>(
         data-responsive={dataResponsive}
         data-snap={snap}
         data-snap-align={snapAlign}
+        aria-label={ariaLabel}
+        aria-labelledby={ariaLabelledBy}
+        aria-describedby={ariaDescribedBy}
+        role={role}
+        aria-orientation={ariaOrientation}
+        aria-live={ariaLive}
+        aria-atomic={ariaAtomic}
+        aria-busy={ariaBusy}
         {...props}
       >
         {childrenWithRefs}

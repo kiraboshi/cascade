@@ -1,5 +1,5 @@
-import { useState } from 'react';
-import { Stack, Cluster, Frame } from '@cascade/react';
+import { useLocation, useNavigate, Routes, Route } from 'react-router-dom';
+import { Stack, Cluster } from '@cascade/react';
 import { FoundationDemo } from './pages/FoundationDemo';
 import { PrimitivesDemo } from './pages/PrimitivesDemo';
 import { MotionDemo } from './pages/MotionDemo';
@@ -14,130 +14,113 @@ import { LandingPage } from './pages/LandingPage';
 import { LayoutAnimationsDemo } from './pages/LayoutAnimationsDemo';
 import { GradientAnimationDemo } from './pages/GradientAnimationDemo';
 import { LayoutPrimitivesShowcase } from './pages/LayoutPrimitivesShowcase';
+import { ResponsivityShowcase } from './pages/ResponsivityShowcase';
+import { ContainerQueryTest } from './pages/ContainerQueryTest';
 import './App.css';
 
-function App() {
-  const [activeTab, setActiveTab] = useState<'landing' | 'foundation' | 'primitives' | 'motion' | 'sequence' | 'motion-values' | 'gestures' | 'layout-transitions' | 'viewport-animations' | 'animate-presence' | 'animation-controls' | 'layout-animations' | 'gradient-animations' | 'layout-primitives-showcase'>('landing');
+type RoutePath = 
+  | 'landing' 
+  | 'foundation' 
+  | 'primitives' 
+  | 'motion' 
+  | 'sequence' 
+  | 'motion-values' 
+  | 'gestures' 
+  | 'layout-transitions' 
+  | 'viewport-animations' 
+  | 'animate-presence' 
+  | 'animation-controls' 
+  | 'layout-animations' 
+  | 'gradient-animations' 
+  | 'layout-primitives-showcase' 
+  | 'responsivity-showcase' 
+  | 'container-query-test';
+
+function LandingPageWrapper() {
+  const navigate = useNavigate();
+  return <LandingPage onNavigate={(path) => navigate(`/${path}`)} />;
+}
+
+function Navigation() {
+  const navigate = useNavigate();
+  const location = useLocation();
+  const currentPath = location.pathname.slice(1) || 'landing';
+
+  const routes: { path: RoutePath; label: string }[] = [
+    { path: 'landing', label: 'Landing Page' },
+    { path: 'foundation', label: 'Foundation' },
+    { path: 'primitives', label: 'Primitives' },
+    { path: 'motion', label: 'Motion' },
+    { path: 'sequence', label: 'Sequences' },
+    { path: 'motion-values', label: 'Motion Values' },
+    { path: 'gestures', label: 'Gestures' },
+    { path: 'layout-transitions', label: 'Layout Transitions' },
+    { path: 'viewport-animations', label: 'Viewport Animations' },
+    { path: 'animate-presence', label: 'AnimatePresence' },
+    { path: 'animation-controls', label: 'Animation Controls' },
+    { path: 'layout-animations', label: 'Layout Animations' },
+    { path: 'gradient-animations', label: 'Gradient Animations' },
+    { path: 'layout-primitives-showcase', label: 'Layout Showcase' },
+    { path: 'responsivity-showcase', label: 'Responsivity' },
+    { path: 'container-query-test', label: 'Container Query Test' },
+  ];
 
   return (
-    <Stack spacing="lg" style={{ minHeight: '100vh', padding: activeTab === 'landing' ? '0' : '2rem' }}>
-      {activeTab !== 'landing' && (
+    <nav>
+      <Cluster spacing="md">
+        {routes.map(({ path, label }) => (
+          <button
+            key={path}
+            onClick={() => navigate(`/${path}`)}
+            className={currentPath === path ? 'active' : ''}
+          >
+            {label}
+          </button>
+        ))}
+      </Cluster>
+    </nav>
+  );
+}
+
+function App() {
+  const location = useLocation();
+  const isLanding = location.pathname === '/' || location.pathname === '/landing';
+
+  return (
+    <Stack spacing="lg" style={{ minHeight: '100vh', padding: isLanding ? '0' : '2rem' }}>
+      {!isLanding && (
         <>
           <header>
             <h1>Cascade CSS Foundation</h1>
             <p>A CSS-first layout system with type-safe abstractions</p>
           </header>
-
-          <nav>
-            <Cluster spacing="md">
-              <button
-                onClick={() => setActiveTab('landing')}
-                className={activeTab === 'landing' ? 'active' : ''}
-              >
-                Landing Page
-              </button>
-          <button
-            onClick={() => setActiveTab('foundation')}
-            className={activeTab === 'foundation' ? 'active' : ''}
-          >
-            Foundation
-          </button>
-          <button
-            onClick={() => setActiveTab('primitives')}
-            className={activeTab === 'primitives' ? 'active' : ''}
-          >
-            Primitives
-          </button>
-          <button
-            onClick={() => setActiveTab('motion')}
-            className={activeTab === 'motion' ? 'active' : ''}
-          >
-            Motion
-          </button>
-          <button
-            onClick={() => setActiveTab('sequence')}
-            className={activeTab === 'sequence' ? 'active' : ''}
-          >
-            Sequences
-          </button>
-          <button
-            onClick={() => setActiveTab('motion-values')}
-            className={activeTab === 'motion-values' ? 'active' : ''}
-          >
-            Motion Values
-          </button>
-          <button
-            onClick={() => setActiveTab('gestures')}
-            className={activeTab === 'gestures' ? 'active' : ''}
-          >
-            Gestures
-          </button>
-          <button
-            onClick={() => setActiveTab('layout-transitions')}
-            className={activeTab === 'layout-transitions' ? 'active' : ''}
-          >
-            Layout Transitions
-          </button>
-          <button
-            onClick={() => setActiveTab('viewport-animations')}
-            className={activeTab === 'viewport-animations' ? 'active' : ''}
-          >
-            Viewport Animations
-          </button>
-          <button
-            onClick={() => setActiveTab('animate-presence')}
-            className={activeTab === 'animate-presence' ? 'active' : ''}
-          >
-            AnimatePresence
-          </button>
-          <button
-            onClick={() => setActiveTab('animation-controls')}
-            className={activeTab === 'animation-controls' ? 'active' : ''}
-          >
-            Animation Controls
-          </button>
-          <button
-            onClick={() => setActiveTab('layout-animations')}
-            className={activeTab === 'layout-animations' ? 'active' : ''}
-          >
-            Layout Animations
-          </button>
-          <button
-            onClick={() => setActiveTab('gradient-animations')}
-            className={activeTab === 'gradient-animations' ? 'active' : ''}
-          >
-            Gradient Animations
-          </button>
-          <button
-            onClick={() => setActiveTab('layout-primitives-showcase')}
-            className={activeTab === 'layout-primitives-showcase' ? 'active' : ''}
-          >
-            Layout Showcase
-          </button>
-        </Cluster>
-      </nav>
+          <Navigation />
         </>
       )}
 
       <main>
-        {activeTab === 'landing' && <LandingPage onNavigate={setActiveTab} />}
-        {activeTab === 'foundation' && <FoundationDemo />}
-        {activeTab === 'primitives' && <PrimitivesDemo />}
-        {activeTab === 'motion' && <MotionDemo />}
-        {activeTab === 'sequence' && <SequenceDemo />}
-        {activeTab === 'motion-values' && <MotionValueDemo />}
-        {activeTab === 'gestures' && <GestureDemo />}
-        {activeTab === 'layout-transitions' && <LayoutTransitionDemo />}
-        {activeTab === 'viewport-animations' && <ViewportAnimationDemo />}
-        {activeTab === 'animate-presence' && <AnimatePresenceDemo />}
-        {activeTab === 'animation-controls' && <AnimationControlsDemo />}
-        {activeTab === 'layout-animations' && <LayoutAnimationsDemo />}
-        {activeTab === 'gradient-animations' && <GradientAnimationDemo />}
-        {activeTab === 'layout-primitives-showcase' && <LayoutPrimitivesShowcase />}
+        <Routes>
+          <Route path="/" element={<LandingPageWrapper />} />
+          <Route path="/landing" element={<LandingPageWrapper />} />
+          <Route path="/foundation" element={<FoundationDemo />} />
+          <Route path="/primitives" element={<PrimitivesDemo />} />
+          <Route path="/motion" element={<MotionDemo />} />
+          <Route path="/sequence" element={<SequenceDemo />} />
+          <Route path="/motion-values" element={<MotionValueDemo />} />
+          <Route path="/gestures" element={<GestureDemo />} />
+          <Route path="/layout-transitions" element={<LayoutTransitionDemo />} />
+          <Route path="/viewport-animations" element={<ViewportAnimationDemo />} />
+          <Route path="/animate-presence" element={<AnimatePresenceDemo />} />
+          <Route path="/animation-controls" element={<AnimationControlsDemo />} />
+          <Route path="/layout-animations" element={<LayoutAnimationsDemo />} />
+          <Route path="/gradient-animations" element={<GradientAnimationDemo />} />
+          <Route path="/layout-primitives-showcase" element={<LayoutPrimitivesShowcase />} />
+          <Route path="/responsivity-showcase" element={<ResponsivityShowcase />} />
+          <Route path="/container-query-test" element={<ContainerQueryTest />} />
+        </Routes>
       </main>
     </Stack>
   );
 }
 
 export default App;
-

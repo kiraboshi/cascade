@@ -17,3 +17,6 @@ export { Reel, type ReelProps } from './Reel';
 export { Cover, type CoverProps } from './Cover';
 export { Imposter, type ImposterProps } from './Imposter';
 
+// Accessibility utilities
+export * from './accessibility';
+

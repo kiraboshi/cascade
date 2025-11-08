@@ -171,7 +171,11 @@ interface GridProps extends Omit<HTMLAttributes<HTMLDivElement>, 'style'> {
   autoFit?: boolean;
   minColumnWidth?: string;
   animate?: boolean | LayoutTransitionConfig;
-  responsive?: Record<string, Partial<Omit<GridProps, 'responsive' | 'animate'>>>;
+  responsive?: Record<string, Partial<Omit<GridProps, 'responsive' | 'animate' | 'containerQueries'>>>;
+  containerQueries?: {
+    minWidth?: Record<string, Partial<Omit<GridProps, 'containerQueries' | 'responsive' | 'animate'>>>;
+    maxWidth?: Record<string, Partial<Omit<GridProps, 'containerQueries' | 'responsive' | 'animate'>>>;
+  };
   as?: keyof JSX.IntrinsicElements;
 }
 ```
@@ -185,6 +189,30 @@ interface GridProps extends Omit<HTMLAttributes<HTMLDivElement>, 'style'> {
   <div>Item 3</div>
 </Grid>
 ```
+
+**Container Queries:**
+
+Grid supports container-based responsive design via the `containerQueries` prop. Use this instead of `responsive` when the Grid is nested in containers (e.g., inside Sidebar, Modal, Split) to ensure correct behavior.
+
+```tsx
+<Grid 
+  columns={1}
+  containerQueries={{
+    minWidth: {
+      '30rem': { columns: 2 },
+      '50rem': { columns: 3 }
+    }
+  }}
+>
+  <div>Item 1</div>
+  <div>Item 2</div>
+  <div>Item 3</div>
+</Grid>
+```
+
+**When to use `containerQueries` vs `responsive`:**
+- Use `responsive` for full-page layouts that respond to viewport size
+- Use `containerQueries` for components that need to adapt to their container's size (nested contexts, modals, sidebars)
 
 ---
 
@@ -232,7 +260,11 @@ interface SidebarProps extends Omit<HTMLAttributes<HTMLDivElement>, 'style' | 'c
   noStretch?: boolean;
   sidebarFirst?: boolean;
   animate?: boolean | LayoutTransitionConfig;
-  responsive?: Record<string, Partial<Omit<SidebarProps, 'responsive' | 'children' | 'animate'>>>;
+  responsive?: Record<string, Partial<Omit<SidebarProps, 'responsive' | 'children' | 'animate' | 'containerQueries'>>>;
+  containerQueries?: {
+    minWidth?: Record<string, Partial<Omit<SidebarProps, 'containerQueries' | 'responsive' | 'children' | 'animate'>>>;
+    maxWidth?: Record<string, Partial<Omit<SidebarProps, 'containerQueries' | 'responsive' | 'children' | 'animate'>>>;
+  };
   as?: keyof JSX.IntrinsicElements;
   children: [ReactNode, ReactNode]; // [sidebar, content] or [content, sidebar]
 }
@@ -242,6 +274,24 @@ interface SidebarProps extends Omit<HTMLAttributes<HTMLDivElement>, 'style' | 'c
 
 ```tsx
 <Sidebar side="left" sidebarWidth="20rem" gap="md">
+  <aside>Sidebar</aside>
+  <main>Content</main>
+</Sidebar>
+```
+
+**Container Queries:**
+
+Sidebar supports container-based responsive design. Use `containerQueries` to make the sidebar stack when its container is narrow, rather than when the viewport is narrow.
+
+```tsx
+<Sidebar 
+  sidebarWidth="20rem"
+  containerQueries={{
+    maxWidth: {
+      '50rem': { sidebarWidth: '0' } // Stack when container is narrow
+    }
+  }}
+>
   <aside>Sidebar</aside>
   <main>Content</main>
 </Sidebar>
@@ -263,7 +313,11 @@ interface SplitProps extends Omit<HTMLAttributes<HTMLDivElement>, 'style' | 'chi
   threshold?: string;
   align?: 'start' | 'center' | 'end' | 'stretch';
   animate?: boolean | LayoutTransitionConfig;
-  responsive?: Record<string, Partial<Omit<SplitProps, 'responsive' | 'children' | 'animate'>>>;
+  responsive?: Record<string, Partial<Omit<SplitProps, 'responsive' | 'children' | 'animate' | 'containerQueries'>>>;
+  containerQueries?: {
+    minWidth?: Record<string, Partial<Omit<SplitProps, 'containerQueries' | 'responsive' | 'children' | 'animate'>>>;
+    maxWidth?: Record<string, Partial<Omit<SplitProps, 'containerQueries' | 'responsive' | 'children' | 'animate'>>>;
+  };
   as?: keyof JSX.IntrinsicElements;
   children: [ReactNode, ReactNode];
 }
@@ -273,6 +327,24 @@ interface SplitProps extends Omit<HTMLAttributes<HTMLDivElement>, 'style' | 'chi
 
 ```tsx
 <Split fraction="1/3" gutter="md">
+  <div>Left Column</div>
+  <div>Right Column</div>
+</Split>
+```
+
+**Container Queries:**
+
+Split supports container-based responsive design. Use `containerQueries` to make the split stack when its container is narrow, rather than when the viewport is narrow.
+
+```tsx
+<Split 
+  fraction="1/2"
+  containerQueries={{
+    maxWidth: {
+      '40rem': { switchTo: 'stack' } // Stack when container is narrow
+    }
+  }}
+>
   <div>Left Column</div>
   <div>Right Column</div>
 </Split>
@@ -453,7 +525,11 @@ interface LayoutTransitionConfig {
 
 ### Responsive Design
 
-All primitives support responsive overrides via the `responsive` prop:
+All primitives support two types of responsive design:
+
+#### Viewport-Based Responsive (`responsive` prop)
+
+Responds to viewport size using media queries. Use for full-page layouts.
 
 ```typescript
 responsive?: Record<string, Partial<ComponentProps>>;
@@ -476,6 +552,41 @@ The keys are breakpoint names (e.g., `'sm'`, `'md'`, `'lg'`), and values are par
 ```
 
 Responsive overrides are applied via CSS data attributes. The component generates `data-responsive` attributes that CSS can target using attribute selectors.
+
+#### Container-Based Responsive (`containerQueries` prop)
+
+Responds to container size using CSS container queries. Use for components that need to adapt to their container's size (nested contexts, modals, sidebars).
+
+```typescript
+containerQueries?: {
+  minWidth?: Record<string, Partial<ComponentProps>>;
+  maxWidth?: Record<string, Partial<ComponentProps>>;
+};
+```
+
+The keys are container width breakpoints (e.g., `'30rem'`, `'50rem'`), and values are partial props that override the base props when the container matches that size.
+
+**Example:**
+
+```tsx
+<Grid 
+  columns={1}
+  containerQueries={{
+    minWidth: {
+      '30rem': { columns: 2 },
+      '50rem': { columns: 3 }
+    }
+  }}
+>
+  {/* Content */}
+</Grid>
+```
+
+**When to use each:**
+- **`responsive`**: Full-page layouts, header/footer, main content areas
+- **`containerQueries`**: Components in sidebars, modals, cards, nested layouts
+
+Both props can be used together for progressive enhancement (container queries for modern browsers, viewport queries as fallback).
 
 ### Polymorphic `as` Prop
 
@@ -517,9 +628,119 @@ Common variable patterns:
 
 ---
 
+## Accessibility
+
+All layout primitives support comprehensive accessibility features for WCAG 2.1 AA compliance.
+
+### ARIA Attributes
+
+All primitives support standard ARIA attributes:
+
+```typescript
+// Standard ARIA props (all primitives)
+ariaLabel?: string;
+ariaLabelledBy?: string;
+ariaDescribedBy?: string;
+role?: string;
+ariaLive?: 'off' | 'polite' | 'assertive';
+ariaAtomic?: boolean;
+ariaBusy?: boolean;
+```
+
+**Example:**
+```tsx
+<Grid 
+  ariaLabel="Product catalog"
+  ariaLabelledBy="products-title"
+  role="region"
+>
+  {/* Content */}
+</Grid>
+```
+
+### Component-Specific ARIA
+
+**Grid:**
+- `ariaRowCount?: number` - Number of rows (for data grids)
+- `ariaColCount?: number` - Number of columns (for data grids)
+
+**Imposter:**
+- `ariaModal?: boolean` - Whether this is a modal dialog
+- `ariaLabelledBy?: string` - ID of element that labels the modal (required for dialogs)
+
+**Reel:**
+- `ariaOrientation?: 'horizontal' | 'vertical'` - Orientation of scrollable region (default: 'horizontal')
+
+**Sidebar:**
+- Defaults to `role="complementary"` for sidebars
+
+### Keyboard Navigation
+
+**Switcher:**
+```typescript
+keyboardNavigation?: boolean; // Enable arrow key navigation
+```
+
+**Reel:**
+```typescript
+keyboardNavigation?: boolean; // Enable keyboard scrolling
+keyboardScrollAmount?: number; // Pixels to scroll with arrow keys (default: 100)
+keyboardPageScrollAmount?: number; // Pixels to scroll with Page Up/Down (default: 400)
+```
+
+**Grid:**
+```typescript
+keyboardNavigation?: boolean; // Enable grid cell navigation (requires columns prop)
+```
+
+### Focus Management (Imposter)
+
+**Imposter** includes built-in focus management for modals:
+
+```typescript
+trapFocus?: boolean; // Trap focus within modal (default: true when breakout is true)
+initialFocus?: RefObject<HTMLElement>; // Element to focus when modal opens
+returnFocusOnClose?: boolean; // Restore focus when modal closes (default: true for modals)
+```
+
+**Example:**
+```tsx
+<Imposter 
+  breakout
+  ariaLabelledBy="modal-title"
+  initialFocus={inputRef}
+>
+  <h2 id="modal-title">Modal Title</h2>
+  <input ref={inputRef} />
+</Imposter>
+```
+
+### Accessibility Utilities
+
+Import accessibility utilities from `@cascade/react`:
+
+```typescript
+import { 
+  useFocusTrap,
+  useFocusRestore,
+  useFocusWithin,
+  useLiveRegion,
+  useLayoutAnnouncement,
+  useArrowKeyNavigation,
+  useKeyboardScrolling,
+  useGridKeyboardNavigation,
+} from '@cascade/react';
+```
+
+See [How to Create Accessible Layouts](./how-to/create-accessible-layouts.md) for detailed usage examples.
+
+---
+
 ## Related Documentation
 
 - [Tutorial: Getting Started with Layout Primitives](./tutorials/layout-primitives.md)
 - [How-to: Create Responsive Layouts](./how-to/create-responsive-layout.md)
+- [How-to: Create Accessible Layouts](./how-to/create-accessible-layouts.md)
 - [Explanations: Layout Primitives Philosophy](./explanations/layout-primitives-philosophy.md)
+- [Explanations: Accessibility](./explanations/accessibility.md)
 

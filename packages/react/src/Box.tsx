@@ -52,6 +52,38 @@ export interface BoxProps extends Omit<HTMLAttributes<HTMLDivElement>, 'style'> 
   // Responsive
   responsive?: Record<string, Partial<Omit<BoxProps, 'responsive' | 'animate'>>>;
   
+  // Accessibility (ARIA)
+  /**
+   * ARIA label for the box.
+   * Provides an accessible name for screen readers.
+   */
+  ariaLabel?: string;
+  /**
+   * ID of element that labels this box.
+   */
+  ariaLabelledBy?: string;
+  /**
+   * ID of element that describes this box.
+   */
+  ariaDescribedBy?: string;
+  /**
+   * ARIA role for the box.
+   */
+  role?: string;
+  /**
+   * ARIA live region politeness level.
+   * Use "polite" or "assertive" to announce box changes to screen readers.
+   */
+  ariaLive?: 'off' | 'polite' | 'assertive';
+  /**
+   * Whether the entire box should be announced when it changes.
+   */
+  ariaAtomic?: boolean;
+  /**
+   * Whether the box is currently busy/loading.
+   */
+  ariaBusy?: boolean;
+  
   // Polymorphic
   as?: keyof JSX.IntrinsicElements;
 }
@@ -103,6 +135,13 @@ export const Box = forwardRef<HTMLElement, BoxProps>(
     minHeight,
     animate,
     responsive,
+    ariaLabel,
+    ariaLabelledBy,
+    ariaDescribedBy,
+    role,
+    ariaLive,
+    ariaAtomic,
+    ariaBusy,
     as: Component = 'div', 
     style, 
     className,
@@ -192,6 +231,13 @@ export const Box = forwardRef<HTMLElement, BoxProps>(
           ...style,
         } as React.CSSProperties}
         data-responsive={dataResponsive}
+        aria-label={ariaLabel}
+        aria-labelledby={ariaLabelledBy}
+        aria-describedby={ariaDescribedBy}
+        role={role}
+        aria-live={ariaLive}
+        aria-atomic={ariaAtomic}
+        aria-busy={ariaBusy}
         {...props}
       >
         {children}

@@ -27,7 +27,7 @@ export interface SplitProps extends Omit<HTMLAttributes<HTMLDivElement>, 'style'
   
   // Responsive behavior
   switchTo?: 'stack' | 'none'; // Stack on mobile
-  threshold?: string; // Breakpoint to switch (e.g., '768px')
+  threshold?: string; // Breakpoint to switch (e.g., '768px') - viewport-based
   
   // Alignment
   align?: 'start' | 'center' | 'end' | 'stretch';
@@ -39,8 +39,51 @@ export interface SplitProps extends Omit<HTMLAttributes<HTMLDivElement>, 'style'
    */
   animate?: boolean | LayoutTransitionConfig;
   
-  // Responsive
-  responsive?: Record<string, Partial<Omit<SplitProps, 'responsive' | 'children' | 'animate'>>>;
+  // Responsive (viewport-based)
+  responsive?: Record<string, Partial<Omit<SplitProps, 'responsive' | 'children' | 'animate' | 'containerQueries'>>>;
+  
+  // Container queries (container-based)
+  /**
+   * Container query support for responsive behavior based on container size.
+   * Use this instead of `responsive` when the component is nested in containers
+   * to ensure correct behavior. For stacking behavior, use `maxWidth` with `switchTo: 'stack'`.
+   */
+  containerQueries?: {
+    minWidth?: Record<string, Partial<Omit<SplitProps, 'containerQueries' | 'responsive' | 'children' | 'animate'>>>;
+    maxWidth?: Record<string, Partial<Omit<SplitProps, 'containerQueries' | 'responsive' | 'children' | 'animate'>>>;
+  };
+  
+  // Accessibility (ARIA)
+  /**
+   * ARIA label for the split layout.
+   * Provides an accessible name for screen readers.
+   */
+  ariaLabel?: string;
+  /**
+   * ID of element that labels this split layout.
+   */
+  ariaLabelledBy?: string;
+  /**
+   * ID of element that describes this split layout.
+   */
+  ariaDescribedBy?: string;
+  /**
+   * ARIA role for the split layout.
+   */
+  role?: string;
+  /**
+   * ARIA live region politeness level.
+   * Use "polite" or "assertive" to announce split changes to screen readers.
+   */
+  ariaLive?: 'off' | 'polite' | 'assertive';
+  /**
+   * Whether the entire split layout should be announced when it changes.
+   */
+  ariaAtomic?: boolean;
+  /**
+   * Whether the split layout is currently busy/loading.
+   */
+  ariaBusy?: boolean;
   
   // Polymorphic
   as?: keyof JSX.IntrinsicElements;
@@ -83,6 +126,14 @@ export const Split = forwardRef<HTMLElement, SplitProps>(
     align = 'stretch',
     animate,
     responsive,
+    containerQueries,
+    ariaLabel,
+    ariaLabelledBy,
+    ariaDescribedBy,
+    role,
+    ariaLive,
+    ariaAtomic,
+    ariaBusy,
     as: Component = 'div', 
     style, 
     className,
@@ -128,7 +179,7 @@ export const Split = forwardRef<HTMLElement, SplitProps>(
     // Parse fraction to grid template
     const gridTemplate = parseFraction(fraction);
     
-    // Generate responsive data-attributes for CSS selectors
+    // Generate responsive data-attributes for CSS selectors (viewport-based)
     const responsiveAttrs: string[] = [];
     let shouldStack = switchTo === 'stack';
     
@@ -153,10 +204,54 @@ export const Split = forwardRef<HTMLElement, SplitProps>(
     }
     const dataResponsive = responsiveAttrs.length > 0 ? responsiveAttrs.join(' ') : undefined;
     
-    const combinedClassName = stylex.props(
+    // Generate CSS variables for container queries
+    // Container queries check container size directly - no data attributes needed
+    const containerQueryStyles: Record<string, string> = {};
+    
+    if (containerQueries?.minWidth) {
+      for (const [width, overrides] of Object.entries(containerQueries.minWidth)) {
+        const normalizedWidth = width.replace(/\s+/g, '-');
+        
+        // Set CSS variables that container queries will use
+        if (overrides.fraction !== undefined) {
+          const overrideTemplate = parseFraction(overrides.fraction);
+          containerQueryStyles[`--split-template-columns-${normalizedWidth}`] = overrideTemplate;
+        }
+        if (overrides.gutter) {
+          const gutterValue = tokens.space[overrides.gutter];
+          containerQueryStyles[`--split-gap-${normalizedWidth}`] = gutterValue;
+        }
+      }
+    }
+    if (containerQueries?.maxWidth) {
+      for (const [width, overrides] of Object.entries(containerQueries.maxWidth)) {
+        const normalizedWidth = width.replace(/\s+/g, '-');
+        
+        // Set CSS variables for max-width container queries
+        if (overrides.fraction !== undefined) {
+          const overrideTemplate = parseFraction(overrides.fraction);
+          containerQueryStyles[`--split-template-columns-max-${normalizedWidth}`] = overrideTemplate;
+        }
+        if (overrides.gutter) {
+          const gutterValue = tokens.space[overrides.gutter];
+          containerQueryStyles[`--split-gap-max-${normalizedWidth}`] = gutterValue;
+        }
+        // Check if stacking should occur
+        if (overrides.switchTo === 'stack') {
+          shouldStack = true;
+        }
+      }
+    }
+    
+    const stylexClassName = stylex.props(
       splitStyles.base,
       shouldStack && splitStyles.stack
-    ).className + (className ? ` ${className}` : '');
+    ).className;
+    const classNames = ['split', stylexClassName];
+    if (className) {
+      classNames.push(className);
+    }
+    const combinedClassName = classNames.join(' ');
     
     // Resolve align value
     const alignValue = align === 'start' ? 'start' :
@@ -206,11 +301,19 @@ export const Split = forwardRef<HTMLElement, SplitProps>(
           '--split-gap': gutterValue,
           '--split-align': alignValue,
           ...(threshold && { '--split-threshold': threshold }),
+          ...containerQueryStyles,
           ...style,
         } as React.CSSProperties}
         data-responsive={dataResponsive}
         data-fraction={fraction}
         data-switch-to={switchTo}
+        aria-label={ariaLabel}
+        aria-labelledby={ariaLabelledBy}
+        aria-describedby={ariaDescribedBy}
+        role={role}
+        aria-live={ariaLive}
+        aria-atomic={ariaAtomic}
+        aria-busy={ariaBusy}
         {...props}
       >
         {childrenWithRefs}

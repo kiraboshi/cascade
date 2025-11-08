@@ -16,6 +16,8 @@ import {
   Flex,
   Switcher,
   Reel,
+  Imposter,
+  useLiveRegion,
 } from '@cascade/react';
 import {
   useMotionValue,
@@ -1357,6 +1359,238 @@ function CarouselDemo() {
 }
 
 // Main Showcase Component
+// Accessibility Examples
+function AccessibilityExamples() {
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [selectedItem, setSelectedItem] = useState(0);
+  const modalTitleRef = useRef<HTMLHeadingElement>(null);
+  const { announce, LiveRegion } = useLiveRegion('polite');
+  
+  const handleItemSelect = (index: number) => {
+    setSelectedItem(index);
+    announce(`Selected item ${index + 1}`);
+  };
+  
+  return (
+    <Box padding="lg" style={{ backgroundColor: '#f9fafb' }}>
+      <Center maxWidth="1200px">
+        <Stack spacing="xl">
+          <Box>
+            <h2 id="accessibility-title">Accessibility Examples</h2>
+            <p>Demonstrating ARIA attributes, keyboard navigation, and focus management.</p>
+          </Box>
+          
+          {/* ARIA Labels Example */}
+          <Box>
+            <h3>ARIA Labels</h3>
+            <Grid 
+              columns={3}
+              gap="md"
+              ariaLabel="Product catalog with 6 items"
+              ariaLabelledBy="accessibility-title"
+            >
+              {[1, 2, 3, 4, 5, 6].map(i => (
+                <Box 
+                  key={i}
+                  padding="md"
+                  background="#fff"
+                  borderRadius="md"
+                  style={{ border: '1px solid #e5e7eb' }}
+                >
+                  Product {i}
+                </Box>
+              ))}
+            </Grid>
+          </Box>
+          
+          {/* Keyboard Navigation Example */}
+          <Box>
+            <h3>Keyboard Navigation (Switcher)</h3>
+            <p>Use arrow keys to navigate, Home/End to jump to first/last, Enter/Space to select.</p>
+            <Switcher keyboardNavigation={true} gap="md">
+              {['Home', 'About', 'Services', 'Contact'].map((item, index) => (
+                <button
+                  key={item}
+                  onClick={() => handleItemSelect(index)}
+                  style={{
+                    padding: '0.5rem 1rem',
+                    backgroundColor: selectedItem === index ? '#3b82f6' : '#e5e7eb',
+                    color: selectedItem === index ? 'white' : 'black',
+                    border: 'none',
+                    borderRadius: '4px',
+                    cursor: 'pointer',
+                  }}
+                >
+                  {item}
+                </button>
+              ))}
+            </Switcher>
+            <p style={{ marginTop: '0.5rem', fontSize: '0.875rem', color: '#666' }}>
+              Selected: {['Home', 'About', 'Services', 'Contact'][selectedItem]}
+            </p>
+          </Box>
+          
+          {/* Keyboard Scrolling Example */}
+          <Box>
+            <h3>Keyboard Scrolling (Reel)</h3>
+            <p>Focus the reel and use arrow keys to scroll, Page Up/Down for larger scrolls, Home/End to jump.</p>
+            <Reel 
+              keyboardNavigation={true}
+              keyboardScrollAmount={150}
+              ariaLabel="Image gallery"
+              itemWidth="200px"
+              gap="md"
+              style={{ 
+                padding: '1rem',
+                backgroundColor: '#fff',
+                borderRadius: '8px',
+                maxWidth: '100%',
+              }}
+            >
+              {[1, 2, 3, 4, 5, 6, 7, 8].map(i => (
+                <Box
+                  key={i}
+                  style={{
+                    width: '200px',
+                    height: '150px',
+                    backgroundColor: `hsl(${i * 45}, 70%, 60%)`,
+                    borderRadius: '8px',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    color: 'white',
+                    fontWeight: 'bold',
+                  }}
+                >
+                  Image {i}
+                </Box>
+              ))}
+            </Reel>
+          </Box>
+          
+          {/* Focus Trap Example */}
+          <Box>
+            <h3>Focus Trap (Modal)</h3>
+            <button
+              onClick={() => setIsModalOpen(true)}
+              style={{
+                padding: '0.5rem 1rem',
+                backgroundColor: '#3b82f6',
+                color: 'white',
+                border: 'none',
+                borderRadius: '4px',
+                cursor: 'pointer',
+              }}
+            >
+              Open Modal
+            </button>
+            
+            {isModalOpen && (
+              <>
+                {/* Backdrop */}
+                <div
+                  style={{
+                    position: 'fixed',
+                    top: 0,
+                    left: 0,
+                    right: 0,
+                    bottom: 0,
+                    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+                    zIndex: 999,
+                  }}
+                  onClick={() => setIsModalOpen(false)}
+                />
+                
+                {/* Modal */}
+                <Imposter
+                  breakout
+                  ariaLabelledBy="modal-title"
+                  ariaDescribedBy="modal-desc"
+                  ariaModal={true}
+                  maxWidth="500px"
+                  margin="md"
+                  style={{
+                    zIndex: 1000,
+                    backgroundColor: 'white',
+                    borderRadius: '8px',
+                    padding: '2rem',
+                  }}
+                >
+                  <h2 id="modal-title" ref={modalTitleRef}>Accessible Modal</h2>
+                  <p id="modal-desc">This modal demonstrates focus trapping. Press Tab to cycle through elements, Escape to close.</p>
+                  <Stack spacing="md" style={{ marginTop: '1rem' }}>
+                    <input 
+                      type="text" 
+                      placeholder="Name"
+                      style={{ padding: '0.5rem', border: '1px solid #ccc', borderRadius: '4px' }}
+                    />
+                    <input 
+                      type="email" 
+                      placeholder="Email"
+                      style={{ padding: '0.5rem', border: '1px solid #ccc', borderRadius: '4px' }}
+                    />
+                    <Cluster spacing="md" justify="end">
+                      <button
+                        onClick={() => setIsModalOpen(false)}
+                        style={{
+                          padding: '0.5rem 1rem',
+                          backgroundColor: '#6b7280',
+                          color: 'white',
+                          border: 'none',
+                          borderRadius: '4px',
+                          cursor: 'pointer',
+                        }}
+                      >
+                        Cancel
+                      </button>
+                      <button
+                        onClick={() => {
+                          setIsModalOpen(false);
+                          announce('Form submitted successfully');
+                        }}
+                        style={{
+                          padding: '0.5rem 1rem',
+                          backgroundColor: '#3b82f6',
+                          color: 'white',
+                          border: 'none',
+                          borderRadius: '4px',
+                          cursor: 'pointer',
+                        }}
+                      >
+                        Submit
+                      </button>
+                    </Cluster>
+                  </Stack>
+                </Imposter>
+              </>
+            )}
+          </Box>
+          
+          {/* Live Region Example */}
+          <Box>
+            <h3>Screen Reader Announcements</h3>
+            <p>Click the button to announce a message to screen readers.</p>
+            <button
+              onClick={() => announce('Layout updated successfully')}
+              style={{
+                padding: '0.5rem 1rem',
+                backgroundColor: '#10b981',
+                color: 'white',
+                border: 'none',
+                borderRadius: '4px',
+                cursor: 'pointer',
+              }}
+            >
+              Announce Update
+            </button>
+            <LiveRegion />
+          </Box>
+        </Stack>
+      </Center>
+    </Box>
+  );
+}
+
 export function LayoutPrimitivesShowcase() {
   return (
     <Stack spacing={0} style={{ width: '100%' }}>
@@ -1371,6 +1605,7 @@ export function LayoutPrimitivesShowcase() {
       <InteractiveSwitcherDemo />
       <InteractiveReelDemo />
       <CarouselDemo />
+      <AccessibilityExamples />
     </Stack>
   );
 }

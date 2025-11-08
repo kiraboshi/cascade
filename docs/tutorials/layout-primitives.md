@@ -104,7 +104,11 @@ function ProductGrid() {
 
 ## Step 4: Responsive Design
 
-All primitives support responsive behavior:
+All primitives support two types of responsive behavior: viewport-based and container-based.
+
+### Viewport-Based Responsive
+
+Responds to viewport size using media queries. Use for full-page layouts:
 
 ```tsx
 import { Grid } from '@cascade/react';
@@ -127,8 +131,43 @@ function ResponsiveGrid() {
 
 **How it works:**
 - Base props apply on mobile
-- `responsive` object overrides props at breakpoints
+- `responsive` object overrides props at viewport breakpoints
 - CSS data attributes enable breakpoint-specific styling
+
+### Container-Based Responsive
+
+Responds to container size using CSS container queries. Use for components nested in sidebars, modals, or cards:
+
+```tsx
+import { Grid } from '@cascade/react';
+
+function ContainerResponsiveGrid() {
+  return (
+    <div style={{ maxWidth: '600px' }}>
+      <Grid 
+        columns={1}
+        containerQueries={{
+          minWidth: {
+            '30rem': { columns: 2 },
+            '50rem': { columns: 3 }
+          }
+        }}
+      >
+        {/* Items */}
+      </Grid>
+    </div>
+  );
+}
+```
+
+**How it works:**
+- Grid adapts to its container's width (600px), not viewport width
+- Container queries check container size directly
+- Essential for reusable components in nested contexts
+
+**When to use each:**
+- **`responsive`**: Full-page layouts, header/footer
+- **`containerQueries`**: Components in sidebars, modals, cards, nested layouts
 
 ---
 
@@ -293,7 +332,8 @@ function AnimatedList() {
 
 You've learned:
 - ✅ How to use Stack, Cluster, and Grid
-- ✅ How to create responsive layouts
+- ✅ How to create viewport-based responsive layouts
+- ✅ How to create container-based responsive layouts
 - ✅ How to combine primitives for complex layouts
 - ✅ How to add animations
 - ✅ Common layout patterns

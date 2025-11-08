@@ -54,9 +54,11 @@ export const tokens = {
   },
   layout: {
     breakpoint: {
-      sm: '40rem',
-      md: '64rem',
-      lg: '80rem',
+      xs: '20rem',   // 320px - Extra small devices
+      sm: '40rem',   // 640px - Small devices (tablets)
+      md: '64rem',   // 1024px - Medium devices (small laptops)
+      lg: '80rem',   // 1280px - Large devices (desktops)
+      xl: '90rem',   // 1440px - Extra large devices (large desktops)
     },
   },
 } as const;

@@ -43,6 +43,38 @@ export interface FlexProps extends Omit<HTMLAttributes<HTMLDivElement>, 'style'>
   // Responsive
   responsive?: Record<string, Partial<Omit<FlexProps, 'responsive' | 'animate'>>>;
   
+  // Accessibility (ARIA)
+  /**
+   * ARIA label for the flex container.
+   * Provides an accessible name for screen readers.
+   */
+  ariaLabel?: string;
+  /**
+   * ID of element that labels this flex container.
+   */
+  ariaLabelledBy?: string;
+  /**
+   * ID of element that describes this flex container.
+   */
+  ariaDescribedBy?: string;
+  /**
+   * ARIA role for the flex container.
+   */
+  role?: string;
+  /**
+   * ARIA live region politeness level.
+   * Use "polite" or "assertive" to announce flex changes to screen readers.
+   */
+  ariaLive?: 'off' | 'polite' | 'assertive';
+  /**
+   * Whether the entire flex container should be announced when it changes.
+   */
+  ariaAtomic?: boolean;
+  /**
+   * Whether the flex container is currently busy/loading.
+   */
+  ariaBusy?: boolean;
+  
   // Polymorphic
   as?: keyof JSX.IntrinsicElements;
 }
@@ -125,6 +157,13 @@ export const Flex = forwardRef<HTMLElement, FlexProps>(
     alignContent,
     animate,
     responsive,
+    ariaLabel,
+    ariaLabelledBy,
+    ariaDescribedBy,
+    role,
+    ariaLive,
+    ariaAtomic,
+    ariaBusy,
     as: Component = 'div', 
     style, 
     className,
@@ -271,6 +310,13 @@ export const Flex = forwardRef<HTMLElement, FlexProps>(
         data-responsive={dataResponsive}
         data-direction={direction}
         data-wrap={wrapValue}
+        aria-label={ariaLabel}
+        aria-labelledby={ariaLabelledBy}
+        aria-describedby={ariaDescribedBy}
+        role={role}
+        aria-live={ariaLive}
+        aria-atomic={ariaAtomic}
+        aria-busy={ariaBusy}
         {...props}
       >
         {childrenWithRefs}
