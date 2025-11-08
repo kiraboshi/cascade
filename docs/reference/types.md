@@ -374,6 +374,18 @@ interface ViewportAnimationConfig extends ViewportConfig {
   };
   initial?: number | string;
   animateOnMount?: boolean;
+  pauseWhenOffScreen?: boolean; // Default: true - pauses animations when off-screen
+}
+```
+
+### `PauseWhenOffScreenConfig`
+
+Configuration for pausing animations when off-screen.
+
+```typescript
+interface PauseWhenOffScreenConfig extends ViewportConfig {
+  motionValues: MotionValue<number | string>[];
+  enabled?: boolean; // Default: true
 }
 ```
 

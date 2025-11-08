@@ -41,6 +41,34 @@ export function MotionSequence({
       isValidElement(child) && child.type === MotionStage
   );
   
+  // React to autoStart prop changes
+  useEffect(() => {
+    const prevHasStarted = hasStarted;
+    setHasStarted(autoStart);
+    
+    // If autoStart becomes true and we haven't started yet, start the sequence
+    if (autoStart && !prevHasStarted && currentStageIndex === 0) {
+      // Use setTimeout to ensure refs are set up
+      setTimeout(() => {
+        const firstStageElement = stageRefs.current[0];
+        if (firstStageElement && (firstStageElement as any).__cascadeStartStage) {
+          (firstStageElement as any).__cascadeStartStage();
+        }
+      }, 0);
+    }
+    
+    // If autoStart becomes false, reset the sequence
+    if (!autoStart && prevHasStarted) {
+      setCurrentStageIndex(0);
+      // Reset all stages by removing animation classes
+      stageRefs.current.forEach((element) => {
+        if (element && (element as any).__cascadeResetStage) {
+          (element as any).__cascadeResetStage();
+        }
+      });
+    }
+  }, [autoStart]);
+  
   useEffect(() => {
     stageRefs.current = validStages.map(() => null);
   }, [validStages.length]);
@@ -91,8 +119,8 @@ export function MotionSequence({
       completionHandlers.push(handler);
     });
     
-    // Start first stage if autoStart
-    if (autoStart && currentStageIndex === 0) {
+    // Start first stage if autoStart and we're at the beginning
+    if (autoStart && currentStageIndex === 0 && hasStarted) {
       const firstStageElement = stageRefs.current[0];
       if (firstStageElement && (firstStageElement as any).__cascadeStartStage) {
         (firstStageElement as any).__cascadeStartStage();

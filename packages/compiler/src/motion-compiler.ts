@@ -14,6 +14,7 @@ export interface SpringMotionConfig {
   from: Record<string, string | number>;
   to: Record<string, string | number>;
   duration?: number;
+  fillMode?: 'none' | 'forwards' | 'backwards' | 'both';
 }
 
 export interface SequenceStage {
@@ -78,6 +79,7 @@ export function defineMotion(config: SpringMotionConfig | KeyframeConfig): Motio
           to: springConfig.to,
           duration: `${duration}ms`,
           easing: tokens.motion.easing.easeOut,
+          fillMode: springConfig.fillMode || 'backwards',
         } as KeyframeConfig);
       }
     }
@@ -89,6 +91,7 @@ export function defineMotion(config: SpringMotionConfig | KeyframeConfig): Motio
       properties,
       duration,
       easing: tokens.motion.easing.bounce,
+      fillMode: springConfig.fillMode || 'backwards',
     };
     
     const name = `motion-${Math.random().toString(36).substr(2, 9)}`;
@@ -270,6 +273,7 @@ ${keyframeRules}
 
 .${sequenceName} {
   animation: ${sequenceName} ${totalSequenceDuration}ms ${tokens.motion.easing.easeOut};
+  animation-fill-mode: backwards;
 }
     `.trim();
     

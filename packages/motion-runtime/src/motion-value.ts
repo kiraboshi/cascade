@@ -7,6 +7,9 @@ import type { SpringConfig } from '@cascade/compiler';
 import { isAccelerated, isLayoutTriggering } from '@cascade/core';
 import { animateSpringRuntime } from './spring-animator';
 import { AnimationTimelineImpl, SpringAnimationTimeline, type AnimationTimeline, type TimelineState } from './animation-timeline';
+import { warnPerformanceIssue, warnConflictingTransform } from './dev-warnings';
+import { createInvalidMotionValueError, createMissingPropertyError } from './error-messages';
+import { debugLog, debugError } from './debug';
 
 export interface MotionValueConfig {
   initialValue: number | string;
@@ -179,6 +182,15 @@ function updateCombinedTransform(element: HTMLElement | null): void {
 export function createMotionValue<T extends number | string>(
   config: MotionValueConfig
 ): MotionValue<T> {
+  // Validate config
+  if (!config) {
+    throw createMissingPropertyError('config', 'createMotionValue');
+  }
+  
+  if (config.initialValue === undefined || config.initialValue === null) {
+    throw createInvalidMotionValueError(config.initialValue, 'number | string');
+  }
+  
   const id = `mv-${Math.random().toString(36).substr(2, 9)}`;
   const cssVarName = `--motion-value-${id}`;
   
@@ -189,8 +201,9 @@ export function createMotionValue<T extends number | string>(
   
   // Development warning for layout-triggering properties
   if (typeof process !== 'undefined' && process.env?.NODE_ENV === 'development' && triggersLayout && config.warnOnLayoutTrigger !== false) {
-    console.warn(
-      `[MotionValue] Property "${propertyName}" triggers layout. Consider using transform/opacity for better performance.`
+    warnPerformanceIssue(
+      `Property "${propertyName}" triggers layout recalculation`,
+      `Consider using transform or opacity properties instead for GPU-accelerated animations. These properties run on the compositor thread and provide better performance.`
     );
   }
   
@@ -256,14 +269,14 @@ export function createMotionValue<T extends number | string>(
       const oldValue = currentValue;
       currentValue = value;
       
-      console.log('[MotionValue] set() called:', {
-        oldValue,
-        newValue: value,
-        valueType: typeof value,
-        isNaN: typeof value === 'number' ? isNaN(value as number) : false,
-        hasCancelAnimation: cancelAnimation !== null,
-        hasCurrentTimeline: currentTimeline !== null
-      });
+      // debugLog('MotionValue', 'motionValue', 'set() called:', {
+      //   oldValue,
+      //   newValue: value,
+      //   valueType: typeof value,
+      //   isNaN: typeof value === 'number' ? isNaN(value as number) : false,
+      //   hasCancelAnimation: cancelAnimation !== null,
+      //   hasCurrentTimeline: currentTimeline !== null
+      // });
       
       // If animating, always trigger onChange immediately for smooth animation
       // Otherwise, batch updates for performance
@@ -278,7 +291,7 @@ export function createMotionValue<T extends number | string>(
             try {
               cb(currentValue);
             } catch (error) {
-              console.error('Error in MotionValue onChange callback:', error);
+              debugError('MotionValue', 'Error in onChange callback:', error);
             }
           });
           
@@ -330,7 +343,7 @@ export function createMotionValue<T extends number | string>(
     target: T,
     animationConfig?: SpringConfig | MotionValueKeyframeConfig
   ): Promise<void> => {
-    console.log('[MotionValue] animateTo called:', {
+    debugLog('MotionValue', 'motionValue', 'animateTo called:', {
       target,
       animationConfig,
       currentValue,
@@ -349,7 +362,7 @@ export function createMotionValue<T extends number | string>(
         willChangeSet = true;
       }
       
-      console.log('[MotionValue] animateTo inside Promise:', {
+      debugLog('MotionValue', 'motionValue', 'animateTo inside Promise:', {
         currentValue,
         target,
         currentValueType: typeof currentValue,
@@ -360,7 +373,7 @@ export function createMotionValue<T extends number | string>(
       if (typeof currentValue === 'number' && typeof target === 'number') {
         // If from and to are the same, resolve immediately
         if (currentValue === target) {
-          console.log('[MotionValue] animateTo: from === to, resolving immediately', {
+          debugLog('MotionValue', 'motionValue', 'animateTo: from === to, resolving immediately', {
             currentValue,
             target
           });
@@ -377,7 +390,7 @@ export function createMotionValue<T extends number | string>(
           (springConfig.stiffness !== undefined || springConfig.damping !== undefined);
         const isKeyframeConfig = hasKeyframeProps && !hasSpringProps;
         
-        console.log('[MotionValue] animateTo detection:', {
+        debugLog('MotionValue', 'motionValue', 'animateTo detection:', {
           animationConfig,
           hasKeyframeProps,
           hasSpringProps,
@@ -468,7 +481,7 @@ export function createMotionValue<T extends number | string>(
           currentTimeline.play();
         } else {
           // Use spring animation with timeline
-          console.log('[MotionValue] Using spring animation path');
+          debugLog('MotionValue', 'motionValue', 'Using spring animation path');
           
           const springConfigFinal = springConfig || {
             stiffness: 300,
@@ -478,7 +491,7 @@ export function createMotionValue<T extends number | string>(
             to: target as number,
           };
           
-          console.log('[MotionValue] springConfigFinal:', springConfigFinal);
+          debugLog('MotionValue', 'motionValue', 'springConfigFinal:', springConfigFinal);
           
           // Ensure from/to are set correctly
           const finalConfig: SpringConfig & { duration?: number } = {
@@ -492,7 +505,7 @@ export function createMotionValue<T extends number | string>(
           const endValue = target as number;
           const estimatedDuration = finalConfig.duration || 2000;
           
-          console.log('[MotionValue] Creating SpringAnimationTimeline:', {
+          debugLog('MotionValue', 'motionValue', 'Creating SpringAnimationTimeline:', {
             finalConfig,
             startValue,
             endValue,
@@ -518,18 +531,18 @@ export function createMotionValue<T extends number | string>(
               startValue,
               endValue,
               (value) => {
-                console.log('[MotionValue] SpringAnimationTimeline updateCallback called with:', value);
+                debugLog('MotionValue', 'motionValue', 'SpringAnimationTimeline updateCallback called with:', value);
                 set(value as T);
               },
               estimatedDuration
             );
-            console.log('[MotionValue] SpringAnimationTimeline created successfully:', {
+            debugLog('MotionValue', 'motionValue', 'SpringAnimationTimeline created successfully:', {
               timeline: currentTimeline,
               duration: currentTimeline.duration,
               progress: currentTimeline.progress
             });
           } catch (error) {
-            console.error('[MotionValue] Error creating SpringAnimationTimeline:', error);
+            debugError('MotionValue', 'Error creating SpringAnimationTimeline:', error);
             reject(error);
             return;
           }
@@ -537,7 +550,7 @@ export function createMotionValue<T extends number | string>(
           // Set cancelAnimation for compatibility with existing code
           // This is critical - set() needs cancelAnimation to be set to trigger onChange immediately
           cancelAnimation = () => {
-            console.log('[MotionValue] cancelAnimation called for spring timeline');
+            debugLog('MotionValue', 'motionValue', 'cancelAnimation called for spring timeline');
             if (currentTimeline) {
               currentTimeline.cancel();
               currentTimeline = null;
@@ -546,13 +559,13 @@ export function createMotionValue<T extends number | string>(
             cleanupWillChange();
           };
           
-          console.log('[MotionValue] cancelAnimation set, subscribing to state changes');
+          debugLog('MotionValue', 'motionValue', 'cancelAnimation set, subscribing to state changes');
           
           // Wait for completion
           const unsubscribe = currentTimeline.onStateChange((state) => {
-            console.log('[MotionValue] SpringAnimationTimeline state change:', state);
+            debugLog('MotionValue', 'motionValue', 'SpringAnimationTimeline state change:', state);
             if (state.isCompleted) {
-              console.log('[MotionValue] SpringAnimationTimeline completed');
+              debugLog('MotionValue', 'motionValue', 'SpringAnimationTimeline completed');
               unsubscribe();
               // Ensure final value is set exactly
               set(endValue as T);
@@ -563,7 +576,7 @@ export function createMotionValue<T extends number | string>(
             }
           });
           
-          console.log('[MotionValue] Starting spring animation with play()');
+          debugLog('MotionValue', 'motionValue', 'Starting spring animation with play()');
           // Start animation
           currentTimeline.play();
         }
@@ -766,7 +779,7 @@ export function createMotionValue<T extends number | string>(
       try {
         cb(currentValue);
       } catch (error) {
-        console.error('Error in MotionValue onChange callback:', error);
+        debugError('MotionValue', 'Error in onChange callback:', error);
       }
     });
   };

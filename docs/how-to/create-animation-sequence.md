@@ -32,37 +32,88 @@ const slideIn = defineMotion({
 });
 ```
 
-### Step 2: Inject CSS
+### Step 2: Create Sequence with CSS Injection
 
-```typescript
-useEffect(() => {
-  const style = document.createElement('style');
-  style.textContent = fadeIn.css + slideIn.css;
-  document.head.appendChild(style);
-  
-  return () => {
-    document.head.removeChild(style);
-  };
-}, []);
-```
-
-### Step 3: Create Sequence
+**Recommended**: Pass CSS to `MotionStage` for automatic injection:
 
 ```typescript
 import { MotionSequence, MotionStage } from '@cascade/motion-runtime';
 
 <MotionSequence autoStart>
-  <MotionStage animation={fadeIn.className}>
+  <MotionStage 
+    animation={{
+      className: fadeIn.className,
+      css: fadeIn.css,  // CSS automatically injected
+    }}
+  >
     Stage 1
   </MotionStage>
   <MotionStage 
-    animation={slideIn.className}
+    animation={{
+      className: slideIn.className,
+      css: slideIn.css,  // CSS automatically injected
+    }}
     delay="until-previous-completes"
   >
     Stage 2
   </MotionStage>
 </MotionSequence>
 ```
+
+**Alternative**: Use `useMotionStyles` hook for manual injection:
+
+```typescript
+import { useMotionStyles } from '@cascade/motion-runtime';
+
+function MySequence() {
+  useMotionStyles([fadeIn, slideIn]); // Inject CSS once
+  
+  return (
+    <MotionSequence autoStart>
+      <MotionStage animation={fadeIn.className}>
+        Stage 1
+      </MotionStage>
+      <MotionStage 
+        animation={slideIn.className}
+        delay="until-previous-completes"
+      >
+        Stage 2
+      </MotionStage>
+    </MotionSequence>
+  );
+}
+```
+
+**Note**: The `autoStart` prop is reactive - it will start/stop the sequence when the prop value changes. This makes it perfect for viewport-triggered animations:
+
+```typescript
+import { MotionSequence, MotionStage } from '@cascade/motion-runtime';
+import { useInView } from '@cascade/motion-runtime';
+import { useRef } from 'react';
+
+function ViewportSequence() {
+  const ref = useRef<HTMLDivElement>(null);
+  const isInView = useInView(ref, { threshold: 0.2 });
+  
+  return (
+    <div ref={ref}>
+      <MotionSequence autoStart={isInView}>
+        <MotionStage animation={{ className: fadeIn.className, css: fadeIn.css }}>
+          Stage 1 (starts when in view)
+        </MotionStage>
+        <MotionStage 
+          animation={{ className: slideIn.className, css: slideIn.css }}
+          delay="until-previous-completes"
+        >
+          Stage 2
+        </MotionStage>
+      </MotionSequence>
+    </div>
+  );
+}
+```
+
+See [How to Inject Animation CSS](./inject-animation-css.md) for detailed patterns.
 
 ---
 

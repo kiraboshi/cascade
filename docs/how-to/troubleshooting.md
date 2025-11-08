@@ -2,6 +2,238 @@
 
 Common issues and solutions when working with Cascade Motion.
 
+**Quick Links:**
+- [Animation Flash/Jank](#animation-flash-or-jank-on-initial-render) - Elements flashing before animation starts
+- [Animation Running Twice](#animation-running-twice) - Animations restarting unexpectedly
+- [Viewport Animations Not Triggering](#viewport-animations-not-triggering) - Scroll animations not working
+- [Missing CSS Warnings](#missing-css-warnings) - Animation classes applied but CSS not injected
+- [Performance Issues](#performance-issues) - Janky or stuttering animations
+
+---
+
+## Animation Flash or Jank on Initial Render
+
+### Problem: Element flashes visible before animation starts
+
+**Symptoms:**
+- Element appears in final state briefly
+- Visible "jump" when animation starts
+- Flash of content on page load
+
+**Possible Causes:**
+
+1. **CSS not injected synchronously**
+   ```typescript
+   // ❌ Wrong: CSS injected in useEffect (too late)
+   useEffect(() => {
+     const style = document.createElement('style');
+     style.textContent = animation.css;
+     document.head.appendChild(style);
+   }, []);
+   
+   // ✅ Correct: Use MotionStage or useMotionStyles
+   <MotionStage animation={{ className, css }}>
+     Content
+   </MotionStage>
+   ```
+
+2. **Initial value doesn't match `from` state**
+   ```typescript
+   // ❌ Wrong: Initial value differs from animation from state
+   const opacity = useMotionValue(1, { property: 'opacity' });
+   // Animation: from: { opacity: 0 }
+   
+   // ✅ Correct: Match initial value to from state
+   const opacity = useMotionValue(0, { property: 'opacity' });
+   // Animation: from: { opacity: 0 }
+   ```
+
+3. **Animation class applied too late**
+   ```typescript
+   // ❌ Wrong: Class applied in useEffect
+   useEffect(() => {
+     element.classList.add(animation.className);
+   }, []);
+   
+   // ✅ Correct: Use MotionStage (applies class before paint)
+   <MotionStage animation={{ className, css }}>
+     Content
+   </MotionStage>
+   ```
+
+**Solution:** 
+- Use `MotionStage` for automatic CSS injection and class application
+- Ensure initial values match animation `from` state
+- See [How to Prevent Animation Flash](./prevent-animation-flash.md) for detailed guide
+
+---
+
+## Animation Running Twice
+
+### Problem: Animation completes, then restarts
+
+**Symptoms:**
+- Animation plays once, then immediately plays again
+- Console warnings about duplicate class application
+- Animation state resets unexpectedly
+
+**Possible Causes:**
+
+1. **Animation class applied multiple times**
+   ```typescript
+   // ❌ Wrong: Class applied in multiple places
+   <div className={animation.className}>  // Applied here
+     <MotionStage animation={animation}>  // And here
+       Content
+     </MotionStage>
+   </div>
+   
+   // ✅ Correct: Let MotionStage handle class application
+   <MotionStage animation={{ className, css }}>
+     Content
+   </MotionStage>
+   ```
+
+2. **MotionSequence autoStart prop not reactive**
+   ```typescript
+   // ❌ Wrong: autoStart doesn't react to changes (old behavior)
+   <MotionSequence autoStart={isInView}>
+     {/* Doesn't restart when isInView changes */}
+   </MotionSequence>
+   
+   // ✅ Correct: autoStart now reacts to changes (fixed in v1.1+)
+   <MotionSequence autoStart={isInView}>
+     {/* Properly restarts when isInView changes */}
+   </MotionSequence>
+   ```
+
+3. **useEffect running multiple times**
+   ```typescript
+   // ❌ Wrong: Effect runs on every render
+   useEffect(() => {
+     element.classList.add(animation.className);
+   }); // Missing dependency array
+   
+   // ✅ Correct: Run once or with proper dependencies
+   useEffect(() => {
+     element.classList.add(animation.className);
+   }, []); // Run once on mount
+   ```
+
+**Solution:**
+- Use `MotionStage` to avoid duplicate class application
+- Check for dev-mode warnings about duplicate classes
+- Ensure `useEffect` dependencies are correct
+- See [Dev-Mode Warnings](../reference/dev-warnings.md) for more info
+
+---
+
+## Viewport Animations Not Triggering
+
+### Problem: Scroll-triggered animations don't start
+
+**Symptoms:**
+- Elements don't animate when scrolling into view
+- `MotionSequence` with `autoStart={isInView}` doesn't work
+- No console errors, but animations don't trigger
+
+**Possible Causes:**
+
+1. **MotionSequence autoStart not reactive (old versions)**
+   ```typescript
+   // ❌ Old behavior: autoStart only checked on mount
+   <MotionSequence autoStart={isInView}>
+     {/* Doesn't react to isInView changes */}
+   </MotionSequence>
+   
+   // ✅ Fixed in v1.1+: autoStart now reactive
+   <MotionSequence autoStart={isInView}>
+     {/* Properly reacts to isInView changes */}
+   </MotionSequence>
+   ```
+
+2. **IntersectionObserver threshold too high**
+   ```typescript
+   // ❌ Wrong: Threshold too high, element never enters viewport
+   useViewportAnimationWithRef(ref, opacity, {
+     threshold: 1.0, // Requires 100% visibility
+   });
+   
+   // ✅ Correct: Lower threshold
+   useViewportAnimationWithRef(ref, opacity, {
+     threshold: 0.1, // Triggers at 10% visibility
+   });
+   ```
+
+3. **Ref not attached to element**
+   ```typescript
+   // ❌ Wrong: Ref not attached
+   const ref = useRef<HTMLDivElement>(null);
+   useViewportAnimationWithRef(ref, opacity, config);
+   return <div>Content</div>; // Missing ref
+   
+   // ✅ Correct: Attach ref
+   const ref = useRef<HTMLDivElement>(null);
+   useViewportAnimationWithRef(ref, opacity, config);
+   return <div ref={ref}>Content</div>;
+   ```
+
+**Solution:**
+- Update to latest version (autoStart reactivity fixed)
+- Check IntersectionObserver threshold
+- Verify ref is attached to element
+- See [Viewport Animation Patterns](./viewport-animation-patterns.md) for detailed guide
+
+---
+
+## Missing CSS Warnings
+
+### Problem: Console warning about missing CSS
+
+**Symptoms:**
+- Console warning: "Animation class 'X' is applied but CSS is not injected"
+- Animation class present but animation doesn't work
+- Element visible but not animating
+
+**Possible Causes:**
+
+1. **CSS not injected**
+   ```typescript
+   // ❌ Wrong: Using className without injecting CSS
+   <div className={fadeIn.className}>
+     Content
+   </div>
+   
+   // ✅ Correct: Inject CSS first
+   useMotionStyles([fadeIn]);
+   <div className={fadeIn.className}>
+     Content
+   </div>
+   
+   // ✅ Or use MotionStage (handles injection automatically)
+   <MotionStage animation={{ className: fadeIn.className, css: fadeIn.css }}>
+     Content
+   </MotionStage>
+   ```
+
+2. **CSS injected after class applied**
+   ```typescript
+   // ❌ Wrong: CSS injected too late
+   useEffect(() => {
+     injectCSS(animation.css);
+   }, []);
+   // Class already applied, CSS not ready
+   
+   // ✅ Correct: Inject CSS synchronously
+   useMotionStyles([animation]); // Synchronous injection
+   ```
+
+**Solution:**
+- Use `MotionStage` for automatic CSS injection
+- Or use `useMotionStyles` before applying classes
+- Check browser DevTools for injected CSS
+- See [How to Inject Animation CSS](./inject-animation-css.md) for detailed guide
+
 ---
 
 ## Animations Not Working
@@ -436,8 +668,24 @@ useEffect(() => {
 
 ## See Also
 
+### Related How-to Guides
+
+- [How to Prevent Animation Flash](./prevent-animation-flash.md) - Detailed guide on preventing visual flash
+- [Animation Timing Considerations](./animation-timing-considerations.md) - When to use useLayoutEffect vs useEffect
+- [Viewport Animation Patterns](./viewport-animation-patterns.md) - Best practices for scroll-triggered animations
+- [How to Inject Animation CSS](./inject-animation-css.md) - CSS injection patterns and best practices
+- [How to Debug Animations](./debug-animations.md) - Enable debug logging for troubleshooting
+
+### API Reference
+
 - [Motion Values API Reference](../reference/motion-values.md)
 - [Gestures API Reference](../reference/gestures.md)
 - [Layout Transitions API Reference](../reference/layout-transitions.md)
-- [Performance Best Practices](../how-to/optimize-performance.md)
+- [Viewport Animations API Reference](../reference/viewport-animations.md)
+- [Sequences API Reference](../reference/sequences.md)
+
+### Performance & Best Practices
+
+- [Performance Best Practices](./optimize-performance.md)
+- [CSS-First Philosophy](../explanations/css-first-philosophy.md)
 

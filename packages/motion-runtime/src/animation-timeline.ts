@@ -4,6 +4,7 @@
  */
 
 import { solveSpring, type SpringConfig } from '@cascade/compiler';
+import { debugLog, debugWarn, debugError } from './debug';
 
 export interface TimelineState {
   isPlaying: boolean;
@@ -339,7 +340,7 @@ export class AnimationTimelineImpl implements AnimationTimeline {
       try {
         cb(this._progress);
       } catch (error) {
-        console.error('Error in progress callback:', error);
+        debugError('AnimationTimeline', 'Error in progress callback:', error);
       }
     });
   }
@@ -358,7 +359,7 @@ export class AnimationTimelineImpl implements AnimationTimeline {
       try {
         cb(state);
       } catch (error) {
-        console.error('Error in state callback:', error);
+        debugError('AnimationTimeline', 'Error in state callback:', error);
       }
     });
   }
@@ -411,7 +412,7 @@ export class SpringAnimationTimeline implements AnimationTimeline {
     // Use higher resolution for smoother seeking (120 steps for 2 seconds = 60fps)
     const steps = Math.max(60, Math.floor(this._estimatedDuration / 16.67)); // ~60fps
     
-    console.log('[SpringAnimationTimeline] constructor:', {
+    debugLog('SpringAnimationTimeline', 'animationTimeline', 'constructor:', {
       springConfig,
       springConfigType: typeof springConfig,
       springConfigKeys: Object.keys(springConfig || {}),
@@ -463,7 +464,7 @@ export class SpringAnimationTimeline implements AnimationTimeline {
         initialVelocity: validInitialVelocity
       };
       
-      console.log('[SpringAnimationTimeline] calling solveSpring with:', {
+      debugLog('SpringAnimationTimeline', 'animationTimeline', 'calling solveSpring with:', {
         configForSolver: configWithFromTo,
         duration: this._estimatedDuration,
         steps,
@@ -483,7 +484,7 @@ export class SpringAnimationTimeline implements AnimationTimeline {
       const lastValue = this.solvedValues[this.solvedValues.length - 1];
       const hasNaN = this.solvedValues.some(v => isNaN(v));
       
-      console.log('[SpringAnimationTimeline] solveSpring returned:', {
+      debugLog('SpringAnimationTimeline', 'animationTimeline', 'solveSpring returned:', {
         solvedValuesLength: this.solvedValues.length,
         firstValue,
         lastValue,
@@ -500,7 +501,7 @@ export class SpringAnimationTimeline implements AnimationTimeline {
       });
       
       if (hasNaN) {
-        console.error('[SpringAnimationTimeline] solveSpring returned NaN values! Falling back to linear interpolation.', {
+        debugError('SpringAnimationTimeline', 'solveSpring returned NaN values! Falling back to linear interpolation.', {
           config: configWithFromTo,
           duration: this._estimatedDuration,
           steps,
@@ -513,7 +514,7 @@ export class SpringAnimationTimeline implements AnimationTimeline {
           const t = i / steps;
           this.solvedValues.push(this.from + (this.to - this.from) * t);
         }
-        console.log('[SpringAnimationTimeline] Using linear interpolation fallback:', {
+        debugLog('SpringAnimationTimeline', 'animationTimeline', 'Using linear interpolation fallback:', {
           solvedValuesLength: this.solvedValues.length,
           firstValue: this.solvedValues[0],
           lastValue: this.solvedValues[this.solvedValues.length - 1]
@@ -521,13 +522,13 @@ export class SpringAnimationTimeline implements AnimationTimeline {
       }
     } catch (error) {
       // Fallback to simple interpolation if solveSpring fails
-      console.warn('[SpringAnimationTimeline] Spring solver failed, using linear interpolation:', error);
+      debugWarn('SpringAnimationTimeline', 'animationTimeline', 'Spring solver failed, using linear interpolation:', error);
       this.solvedValues = [];
       for (let i = 0; i <= steps; i++) {
         const progress = i / steps;
         this.solvedValues.push(from + (to - from) * progress);
       }
-      console.log('[SpringAnimationTimeline] Fallback linear interpolation:', {
+      debugLog('SpringAnimationTimeline', 'animationTimeline', 'Fallback linear interpolation:', {
         solvedValuesLength: this.solvedValues.length,
         firstValue: this.solvedValues[0],
         lastValue: this.solvedValues[this.solvedValues.length - 1]
@@ -564,6 +565,12 @@ export class SpringAnimationTimeline implements AnimationTimeline {
   }
   
   play(): void {
+    // Don't restart if already playing (unless paused or completed)
+    if (this._isPlaying && !this._isPaused && !this._isCompleted) {
+      debugLog('SpringAnimationTimeline', 'animationTimeline', 'play() called but already playing, skipping');
+      return;
+    }
+    
     // Reset if completed and not reversed
     if (this._isCompleted && !this._isReversed) {
       this._progress = 0;
@@ -604,7 +611,7 @@ export class SpringAnimationTimeline implements AnimationTimeline {
     this._isCompleted = false;
     
     // Ensure initial value is set correctly before starting animation
-    console.log('[SpringAnimationTimeline] play() called:', {
+    debugLog('SpringAnimationTimeline', 'animationTimeline', 'play() called:', {
       progress: this._progress,
       isReversed: this._isReversed,
       solvedValuesLength: this.solvedValues.length,
@@ -619,7 +626,7 @@ export class SpringAnimationTimeline implements AnimationTimeline {
       const startIndex = Math.floor(validStartProgress * (this.solvedValues.length - 1));
       const startValue = this.solvedValues[startIndex];
       
-      console.log('[SpringAnimationTimeline] play() setting initial value from solved values:', {
+      debugLog('SpringAnimationTimeline', 'animationTimeline', 'play() setting initial value from solved values:', {
         startProgress,
         validStartProgress,
         startIndex,
@@ -628,7 +635,7 @@ export class SpringAnimationTimeline implements AnimationTimeline {
       });
       
       if (isNaN(startValue)) {
-        console.error('[SpringAnimationTimeline] play() NaN startValue!', {
+        debugError('SpringAnimationTimeline', 'play() NaN startValue!', {
           startIndex,
           solvedValuesLength: this.solvedValues.length,
           solvedValueAtIndex: this.solvedValues[startIndex]
@@ -639,7 +646,7 @@ export class SpringAnimationTimeline implements AnimationTimeline {
       this.updateCallback(startValue);
     } else if (this._progress === 0 && !this._isReversed) {
       // Set initial value if starting from beginning
-      console.log('[SpringAnimationTimeline] play() setting initial value from "from":', {
+      debugLog('SpringAnimationTimeline', 'animationTimeline', 'play() setting initial value from "from":', {
         from: this.from
       });
       this.currentValue = this.from;
@@ -801,7 +808,7 @@ export class SpringAnimationTimeline implements AnimationTimeline {
   private animate(): void {
     const animateFrame = (timestamp: number) => {
       if (!this._isPlaying || this._startTime === null) {
-        console.log('[SpringAnimationTimeline] animateFrame: not playing or startTime is null', {
+        debugLog('SpringAnimationTimeline', 'animationTimeline', 'animateFrame: not playing or startTime is null', {
           isPlaying: this._isPlaying,
           startTime: this._startTime
         });
@@ -810,7 +817,7 @@ export class SpringAnimationTimeline implements AnimationTimeline {
       
       if (this.lastFrameTime === null) {
         this.lastFrameTime = timestamp;
-        console.log('[SpringAnimationTimeline] animateFrame: first frame, skipping', {
+        debugLog('SpringAnimationTimeline', 'animationTimeline', 'animateFrame: first frame, skipping', {
           timestamp,
           startTime: this._startTime
         });
@@ -822,7 +829,7 @@ export class SpringAnimationTimeline implements AnimationTimeline {
       const elapsed = timestamp - this._startTime;
       const progress = Math.min(1, Math.max(0, elapsed / this._estimatedDuration));
       
-      console.log('[SpringAnimationTimeline] animateFrame:', {
+      debugLog('SpringAnimationTimeline', 'animationTimeline', 'animateFrame:', {
         timestamp,
         startTime: this._startTime,
         elapsed,
@@ -844,7 +851,7 @@ export class SpringAnimationTimeline implements AnimationTimeline {
         );
         const value = this.solvedValues[index];
         
-        console.log('[SpringAnimationTimeline] using solved values:', {
+        debugLog('SpringAnimationTimeline', 'animationTimeline', 'using solved values:', {
           effectiveProgress,
           clampedProgress,
           index,
@@ -858,7 +865,7 @@ export class SpringAnimationTimeline implements AnimationTimeline {
         });
         
         if (isNaN(value)) {
-          console.error('[SpringAnimationTimeline] NaN value detected!', {
+          debugError('SpringAnimationTimeline', 'NaN value detected!', {
             index,
             solvedValuesLength: this.solvedValues.length,
             clampedProgress,
@@ -948,7 +955,7 @@ export class SpringAnimationTimeline implements AnimationTimeline {
       try {
         cb(this._progress);
       } catch (error) {
-        console.error('Error in progress callback:', error);
+        debugError('AnimationTimeline', 'Error in progress callback:', error);
       }
     });
   }
@@ -967,7 +974,7 @@ export class SpringAnimationTimeline implements AnimationTimeline {
       try {
         cb(state);
       } catch (error) {
-        console.error('Error in state callback:', error);
+        debugError('AnimationTimeline', 'Error in state callback:', error);
       }
     });
   }

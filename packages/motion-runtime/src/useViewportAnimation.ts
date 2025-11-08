@@ -9,6 +9,7 @@ import { useInView } from './useInView';
 import type { ViewportConfig } from './useInView';
 import type { SpringConfig } from '@cascade/compiler';
 import type { MotionValueKeyframeConfig } from './motion-value';
+import { createMissingPropertyError, createInvalidPropertyTypeError, ErrorCode } from './error-messages';
 
 export interface ViewportAnimationConfig extends ViewportConfig {
   /**
@@ -36,6 +37,13 @@ export interface ViewportAnimationConfig extends ViewportConfig {
    * Animate on mount if already in viewport
    */
   animateOnMount?: boolean;
+  
+  /**
+   * Pause animations when element is off-screen (default: true)
+   * When enabled, ongoing animations are paused when element leaves viewport
+   * and resumed when element re-enters viewport
+   */
+  pauseWhenOffScreen?: boolean;
 }
 
 /**
@@ -48,6 +56,21 @@ export function useViewportAnimation(
   motionValue: MotionValue<number | string>,
   config: ViewportAnimationConfig
 ): RefObject<HTMLElement> {
+  // Validate config
+  if (!motionValue) {
+    throw createMissingPropertyError('motionValue', 'useViewportAnimation');
+  }
+  
+  if (!config) {
+    throw createMissingPropertyError('config', 'useViewportAnimation');
+  }
+  
+  if (!config.onEnter && !config.onExit) {
+    throw createMissingPropertyError(
+      'onEnter or onExit',
+      'useViewportAnimation'
+    );
+  }
   const elementRef = useRef<HTMLElement | null>(null);
   const configRef = useRef(config);
   const hasAnimatedRef = useRef(false);
@@ -75,9 +98,39 @@ export function useViewportAnimation(
     }
   }, [config.initial, motionValue]);
   
+  // Pause/resume animations based on viewport visibility
+  useEffect(() => {
+    const currentConfig = configRef.current;
+    const pauseWhenOffScreen = currentConfig.pauseWhenOffScreen !== false; // Default: true
+    
+    if (pauseWhenOffScreen) {
+      const timeline = motionValue.getTimeline();
+      if (timeline) {
+        if (isInView) {
+          // Resume animation if paused
+          if (timeline.isPaused) {
+            timeline.play();
+          }
+        } else {
+          // Pause animation when off-screen
+          if (timeline.isPlaying) {
+            timeline.pause();
+          }
+        }
+      }
+    }
+  }, [isInView, motionValue]);
+  
   // Animate on viewport change
   useEffect(() => {
     const currentConfig = configRef.current;
+    
+    // Don't trigger animations if paused when off-screen and element is off-screen
+    const pauseWhenOffScreen = currentConfig.pauseWhenOffScreen !== false; // Default: true
+    if (pauseWhenOffScreen && !isInView && currentConfig.onEnter) {
+      // Element is off-screen and we're pausing - don't start new animations
+      return;
+    }
     
     if (isInView && currentConfig.onEnter) {
       // Check if we should animate on mount
@@ -106,6 +159,25 @@ export function useViewportAnimationWithRef(
   motionValue: MotionValue<number | string>,
   config: ViewportAnimationConfig
 ): void {
+  // Validate inputs
+  if (!elementRef) {
+    throw createMissingPropertyError('elementRef', 'useViewportAnimationWithRef');
+  }
+  
+  if (!motionValue) {
+    throw createMissingPropertyError('motionValue', 'useViewportAnimationWithRef');
+  }
+  
+  if (!config) {
+    throw createMissingPropertyError('config', 'useViewportAnimationWithRef');
+  }
+  
+  if (!config.onEnter && !config.onExit) {
+    throw createMissingPropertyError(
+      'onEnter or onExit',
+      'useViewportAnimationWithRef'
+    );
+  }
   const configRef = useRef(config);
   const hasAnimatedRef = useRef(false);
   const initialValueSetRef = useRef(false);
@@ -124,6 +196,29 @@ export function useViewportAnimationWithRef(
     }
   }, [config.initial, motionValue]);
   
+  // Pause/resume animations based on viewport visibility
+  useEffect(() => {
+    const currentConfig = configRef.current;
+    const pauseWhenOffScreen = currentConfig.pauseWhenOffScreen !== false; // Default: true
+    
+    if (pauseWhenOffScreen) {
+      const timeline = motionValue.getTimeline();
+      if (timeline) {
+        if (isInView) {
+          // Resume animation if paused
+          if (timeline.isPaused) {
+            timeline.play();
+          }
+        } else {
+          // Pause animation when off-screen
+          if (timeline.isPlaying) {
+            timeline.pause();
+          }
+        }
+      }
+    }
+  }, [isInView, motionValue]);
+  
   // Animate on viewport change
   useEffect(() => {
     const currentConfig = configRef.current;
@@ -136,6 +231,13 @@ export function useViewportAnimationWithRef(
     if (currentConfig.initial !== undefined && !initialValueSetRef.current) {
       motionValue.set(currentConfig.initial);
       initialValueSetRef.current = true;
+    }
+    
+    // Don't trigger animations if paused when off-screen and element is off-screen
+    const pauseWhenOffScreen = currentConfig.pauseWhenOffScreen !== false; // Default: true
+    if (pauseWhenOffScreen && !isInView && currentConfig.onEnter) {
+      // Element is off-screen and we're pausing - don't start new animations
+      return;
     }
     
     if (isInView && currentConfig.onEnter) {

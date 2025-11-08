@@ -10,20 +10,31 @@ import { LayoutTransitionDemo } from './pages/LayoutTransitionDemo';
 import { ViewportAnimationDemo } from './pages/ViewportAnimationDemo';
 import { AnimatePresenceDemo } from './pages/AnimatePresenceDemo';
 import { AnimationControlsDemo } from './pages/AnimationControlsDemo';
+import { LandingPage } from './pages/LandingPage';
+import { LayoutAnimationsDemo } from './pages/LayoutAnimationsDemo';
+import { GradientAnimationDemo } from './pages/GradientAnimationDemo';
 import './App.css';
 
 function App() {
-  const [activeTab, setActiveTab] = useState<'foundation' | 'primitives' | 'motion' | 'sequence' | 'motion-values' | 'gestures' | 'layout-transitions' | 'viewport-animations' | 'animate-presence' | 'animation-controls'>('foundation');
+  const [activeTab, setActiveTab] = useState<'landing' | 'foundation' | 'primitives' | 'motion' | 'sequence' | 'motion-values' | 'gestures' | 'layout-transitions' | 'viewport-animations' | 'animate-presence' | 'animation-controls' | 'layout-animations' | 'gradient-animations'>('landing');
 
   return (
-    <Stack spacing="lg" style={{ minHeight: '100vh', padding: '2rem' }}>
-      <header>
-        <h1>Cascade CSS Foundation</h1>
-        <p>A CSS-first layout system with type-safe abstractions</p>
-      </header>
+    <Stack spacing="lg" style={{ minHeight: '100vh', padding: activeTab === 'landing' ? '0' : '2rem' }}>
+      {activeTab !== 'landing' && (
+        <>
+          <header>
+            <h1>Cascade CSS Foundation</h1>
+            <p>A CSS-first layout system with type-safe abstractions</p>
+          </header>
 
-      <nav>
-        <Cluster spacing="md">
+          <nav>
+            <Cluster spacing="md">
+              <button
+                onClick={() => setActiveTab('landing')}
+                className={activeTab === 'landing' ? 'active' : ''}
+              >
+                Landing Page
+              </button>
           <button
             onClick={() => setActiveTab('foundation')}
             className={activeTab === 'foundation' ? 'active' : ''}
@@ -84,10 +95,25 @@ function App() {
           >
             Animation Controls
           </button>
+          <button
+            onClick={() => setActiveTab('layout-animations')}
+            className={activeTab === 'layout-animations' ? 'active' : ''}
+          >
+            Layout Animations
+          </button>
+          <button
+            onClick={() => setActiveTab('gradient-animations')}
+            className={activeTab === 'gradient-animations' ? 'active' : ''}
+          >
+            Gradient Animations
+          </button>
         </Cluster>
       </nav>
+        </>
+      )}
 
       <main>
+        {activeTab === 'landing' && <LandingPage />}
         {activeTab === 'foundation' && <FoundationDemo />}
         {activeTab === 'primitives' && <PrimitivesDemo />}
         {activeTab === 'motion' && <MotionDemo />}
@@ -98,6 +124,8 @@ function App() {
         {activeTab === 'viewport-animations' && <ViewportAnimationDemo />}
         {activeTab === 'animate-presence' && <AnimatePresenceDemo />}
         {activeTab === 'animation-controls' && <AnimationControlsDemo />}
+        {activeTab === 'layout-animations' && <LayoutAnimationsDemo />}
+        {activeTab === 'gradient-animations' && <GradientAnimationDemo />}
       </main>
     </Stack>
   );

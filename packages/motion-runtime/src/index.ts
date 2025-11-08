@@ -31,9 +31,45 @@ export { useInView, useInViewState, type ViewportConfig, type ViewportState } fr
 export { useViewportAnimation, useViewportAnimationWithRef, type ViewportAnimationConfig } from './useViewportAnimation';
 export { useFadeInOnScroll, type FadeInOnScrollConfig } from './useFadeInOnScroll';
 export { useSlideInOnScroll, type SlideInOnScrollConfig } from './useSlideInOnScroll';
+export { usePauseWhenOffScreen, type PauseWhenOffScreenConfig } from './usePauseWhenOffScreen';
 
 // AnimatePresence
 export { AnimatePresence, type AnimatePresenceProps } from './AnimatePresence';
 export { applyExitAnimation, applyEnterAnimation, type ExitAnimationConfig, type EnterAnimationConfig } from './animate-presence-utils';
 export { useAnimatePresence, type UseAnimatePresenceConfig, type UseAnimatePresenceReturn } from './useAnimatePresence';
+
+// Development utilities (for advanced use cases)
+export { 
+  setWarningsEnabled, 
+  areWarningsEnabled,
+  warnDuplicateClass,
+  warnMissingCSS,
+  warnConflictingTransform,
+  warnInvalidAnimationConfig,
+  warnMotionValueMisuse,
+  warnDirectClassUsage,
+  warnPerformanceIssue
+} from './dev-warnings';
+export { 
+  ErrorCode,
+  createInvalidHookCallError,
+  createHookInCallbackError,
+  createHookConditionalError,
+  createInvalidMotionValueError,
+  createInvalidAnimationConfigError,
+  createMissingPropertyError,
+  createInvalidPropertyTypeError,
+  createAnimationNotFoundError,
+  getErrorCode,
+  isCascadeMotionError
+} from './error-messages';
+export {
+  enableDebugLogging,
+  disableDebugLogging,
+  isDebugCategoryEnabled,
+  getEnabledDebugCategories,
+  debugLog,
+  debugWarn,
+  debugError
+} from './debug';
 

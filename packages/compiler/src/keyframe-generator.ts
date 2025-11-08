@@ -11,14 +11,16 @@ export interface KeyframeValue {
 export interface KeyframeConfig {
   from: KeyframeValue;
   to: KeyframeValue;
-  duration?: number;
+  duration?: number | string;
   easing?: string;
+  fillMode?: 'none' | 'forwards' | 'backwards' | 'both';
 }
 
 export interface SpringKeyframeConfig extends SpringConfig {
   properties: Record<string, { from: number; to: number }>;
   duration?: number;
   easing?: string;
+  fillMode?: 'none' | 'forwards' | 'backwards' | 'both';
 }
 
 /**
@@ -28,7 +30,7 @@ export function generateKeyframes(
   name: string,
   config: KeyframeConfig
 ): { css: string; className: string } {
-  const { from, to, duration = '300ms', easing = 'ease' } = config;
+  const { from, to, duration = '300ms', easing = 'ease', fillMode = 'backwards' } = config;
   
   const css = `
 @keyframes ${name} {
@@ -46,6 +48,7 @@ export function generateKeyframes(
 
 .${name} {
   animation: ${name} ${duration} ${easing};
+  animation-fill-mode: ${fillMode};
 }
   `.trim();
   
@@ -59,7 +62,7 @@ export function generateSpringKeyframes(
   name: string,
   config: SpringKeyframeConfig
 ): { css: string; className: string; jsConfig?: object } {
-  const { properties, duration = 300, easing = 'cubic-bezier(0.34, 1.56, 0.64, 1)' } = config;
+  const { properties, duration = 300, easing = 'cubic-bezier(0.34, 1.56, 0.64, 1)', fillMode = 'backwards' } = config;
   
   // Solve spring for each property
   const keyframes: Array<{ percentage: number; values: Record<string, number> }> = [];
@@ -110,6 +113,7 @@ ${keyframeRules}
 
 .${name} {
   animation: ${name} ${duration}ms ${easing};
+  animation-fill-mode: ${fillMode};
 }
   `.trim();
   

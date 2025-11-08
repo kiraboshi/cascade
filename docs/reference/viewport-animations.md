@@ -178,18 +178,30 @@ function MyComponent() {
   
   useViewportAnimationWithRef(ref, opacity, {
     initial: 0,
+    threshold: 0.2,
     onEnter: {
       target: 1,
       config: { duration: 500, easing: 'ease-out' },
     },
+    onExit: {
+      target: 0,
+      config: { duration: 300, easing: 'ease-in' },
+    },
+    pauseWhenOffScreen: true, // Default: true - pauses when off-screen
   });
   
   useViewportAnimationWithRef(ref, y, {
     initial: 50,
+    threshold: 0.2,
     onEnter: {
       target: 0,
       config: { stiffness: 300, damping: 30 },
     },
+    onExit: {
+      target: 50,
+      config: { stiffness: 300, damping: 30 },
+    },
+    pauseWhenOffScreen: true, // Default: true
   });
   
   return (
@@ -315,6 +327,55 @@ function MyComponent() {
 
 ---
 
+### `usePauseWhenOffScreen(elementRef, config): void`
+
+Hook to automatically pause motion value animations when element is off-screen. This is a performance optimization to prevent unnecessary updates for invisible elements.
+
+**Signature:**
+```typescript
+function usePauseWhenOffScreen(
+  elementRef: RefObject<HTMLElement>,
+  config: PauseWhenOffScreenConfig
+): void
+```
+
+**Parameters:**
+
+- `elementRef`: React ref object pointing to the element to observe
+- `config`: Configuration object (see `PauseWhenOffScreenConfig` below)
+
+**Returns:** Nothing. The hook pauses/resumes animations based on viewport visibility.
+
+**Example:**
+```typescript
+import { usePauseWhenOffScreen, useMotionValue, useRotate } from '@cascade/motion-runtime';
+import { useRef } from 'react';
+
+function AnimatedSection() {
+  const ref = useRef<HTMLDivElement>(null);
+  const rotate = useRotate(0);
+  const scale = useMotionValue(1, { property: 'scale' });
+  
+  // Pause animations when off-screen
+  usePauseWhenOffScreen(ref, {
+    motionValues: [rotate, scale],
+    threshold: 0.1,
+  });
+  
+  // ... animation logic
+  
+  return (
+    <div ref={ref}>
+      Content
+    </div>
+  );
+}
+```
+
+**Note**: This hook is useful for animations that run continuously (like rotations or pulsing effects) and should pause when not visible.
+
+---
+
 ## Configuration Types
 
 ### `ViewportConfig`
@@ -375,6 +436,7 @@ interface ViewportAnimationConfig extends ViewportConfig {
   };
   initial?: number | string;
   animateOnMount?: boolean;
+  pauseWhenOffScreen?: boolean;
 }
 ```
 
@@ -384,6 +446,10 @@ interface ViewportAnimationConfig extends ViewportConfig {
 - `onExit`: Animation to trigger when element leaves viewport
 - `initial`: Initial value (before viewport detection)
 - `animateOnMount`: Animate on mount if already in viewport. Default: `false`
+- `pauseWhenOffScreen`: Pause animations when element is off-screen (default: `true`)
+  - When enabled, ongoing animations are paused when element leaves viewport
+  - Animations resume when element re-enters viewport
+  - This is a performance optimization to prevent unnecessary updates
 
 **Example:**
 ```typescript

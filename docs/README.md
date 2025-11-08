@@ -61,6 +61,11 @@ Goal-oriented guides that show you how to accomplish specific tasks. Each guide 
 - [Migrate from Framer Motion](./how-to/migrate-from-framer-motion.md)
 - [Optimize Performance](./how-to/optimize-performance.md)
 - [Troubleshooting](./how-to/troubleshooting.md)
+- [Prevent Animation Flash](./how-to/prevent-animation-flash.md) - Preventing visual flash/jank
+- [Animation Timing Considerations](./how-to/animation-timing-considerations.md) - useLayoutEffect vs useEffect
+- [Viewport Animation Patterns](./how-to/viewport-animation-patterns.md) - Best practices for scroll animations
+- [Inject Animation CSS](./how-to/inject-animation-css.md) - CSS injection patterns
+- [Debug Animations](./how-to/debug-animations.md) - Enable debug logging
 
 ---
 

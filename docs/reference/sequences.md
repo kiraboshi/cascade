@@ -32,7 +32,9 @@ interface MotionSequenceProps {
 
 - `children`: React children (should be `MotionStage` components)
 - `onComplete`: Callback when all stages complete
-- `autoStart`: Start automatically on mount (default: `false`)
+- `autoStart`: Start automatically on mount and react to prop changes (default: `false`)
+  - **Note**: This prop is reactive - the sequence will start/stop when `autoStart` changes
+  - Use with viewport triggers: `<MotionSequence autoStart={isInView}>`
 - `respectReducedMotion`: Respect `prefers-reduced-motion` (default: `true`)
 - `pauseOnHover`: Pause animation on hover (default: `false`)
 - `layoutTransition`: Enable layout transitions for stages (default: `false`)
@@ -274,6 +276,37 @@ if (prefersReducedMotion()) {
   </MotionStage>
 </MotionSequence>
 ```
+
+### Pattern 4: Viewport-Triggered Sequence
+
+```typescript
+import { MotionSequence, MotionStage } from '@cascade/motion-runtime';
+import { useInView } from '@cascade/motion-runtime';
+import { useRef } from 'react';
+
+function ViewportSequence() {
+  const ref = useRef<HTMLDivElement>(null);
+  const isInView = useInView(ref, { threshold: 0.2 });
+  
+  return (
+    <div ref={ref}>
+      <MotionSequence autoStart={isInView}>
+        <MotionStage animation={fadeIn}>
+          Stage 1 (starts when in view)
+        </MotionStage>
+        <MotionStage 
+          animation={slideIn}
+          delay={200}
+        >
+          Stage 2 (starts 200ms after Stage 1)
+        </MotionStage>
+      </MotionSequence>
+    </div>
+  );
+}
+```
+
+**Note**: The `autoStart` prop is reactive - the sequence automatically starts when `isInView` becomes `true` and resets when it becomes `false`.
 
 ### Pattern 2: Overlapping Stages
 
