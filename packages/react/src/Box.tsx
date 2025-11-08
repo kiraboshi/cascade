@@ -5,8 +5,9 @@
 
 import { forwardRef, useRef, type HTMLAttributes } from 'react';
 import * as stylex from '@stylexjs/stylex';
-import { tokens, type SpaceToken } from '@cascade/tokens';
+import { type SpaceToken } from '@cascade/tokens';
 import { useLayoutTransition, type LayoutTransitionConfig } from '@cascade/motion-runtime';
+import { resolveSpacing, resolveBorderRadius } from './utils/token-resolvers';
 
 const boxStyles = stylex.create({
   base: {
@@ -88,37 +89,6 @@ export interface BoxProps extends Omit<HTMLAttributes<HTMLDivElement>, 'style'> 
   as?: keyof JSX.IntrinsicElements;
 }
 
-/**
- * Resolve spacing token or array to CSS value
- */
-function resolveSpacing(spacing: SpaceToken | SpaceToken[] | undefined): string {
-  if (!spacing) return '0';
-  
-  if (Array.isArray(spacing)) {
-    const [vertical, horizontal] = spacing;
-    const verticalValue = tokens.space[vertical];
-    const horizontalValue = tokens.space[horizontal];
-    return `${verticalValue} ${horizontalValue}`;
-  }
-  
-  return tokens.space[spacing];
-}
-
-/**
- * Resolve border radius token or string to CSS value
- */
-function resolveBorderRadius(radius: SpaceToken | string | undefined): string {
-  if (!radius) return '0';
-  
-  // If it's a token, resolve it
-  const spaceKeys: SpaceToken[] = ['xs', 'sm', 'md', 'lg', 'xl'];
-  if (spaceKeys.includes(radius as SpaceToken)) {
-    return tokens.space[radius as SpaceToken];
-  }
-  
-  // Otherwise, use as-is (string)
-  return radius;
-}
 
 export const Box = forwardRef<HTMLElement, BoxProps>(
   ({ 

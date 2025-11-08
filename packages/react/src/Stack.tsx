@@ -16,30 +16,6 @@ const stackStyles = stylex.create({
     alignItems: 'var(--stack-align, stretch)',
     justifyContent: 'var(--stack-justify, flex-start)',
   },
-  alignStart: {
-    alignItems: 'flex-start',
-  },
-  alignCenter: {
-    alignItems: 'center',
-  },
-  alignEnd: {
-    alignItems: 'flex-end',
-  },
-  alignStretch: {
-    alignItems: 'stretch',
-  },
-  justifyStart: {
-    justifyContent: 'flex-start',
-  },
-  justifyCenter: {
-    justifyContent: 'center',
-  },
-  justifyEnd: {
-    justifyContent: 'flex-end',
-  },
-  justifyBetween: {
-    justifyContent: 'space-between',
-  },
 });
 
 export interface StackProps extends Omit<HTMLAttributes<HTMLDivElement>, 'style'> {
@@ -142,6 +118,17 @@ export const Stack = forwardRef<HTMLElement, StackProps>(
     // Resolve spacing token
     const gap = tokens.space[spacing];
     
+    // Resolve alignment values to CSS values
+    const alignValue = align === 'start' ? 'flex-start' :
+                       align === 'end' ? 'flex-end' :
+                       align || 'stretch';
+    
+    const justifyValue = justify === 'start' ? 'flex-start' :
+                         justify === 'end' ? 'flex-end' :
+                         justify === 'between' ? 'space-between' :
+                         justify === 'center' ? 'center' :
+                         'flex-start';
+    
     // Generate responsive data-attributes for CSS selectors
     const responsiveAttrs: string[] = [];
     if (responsive) {
@@ -159,22 +146,12 @@ export const Stack = forwardRef<HTMLElement, StackProps>(
     }
     const dataResponsive = responsiveAttrs.length > 0 ? responsiveAttrs.join(' ') : undefined;
     
-    // Build className with alignment utilities
-    const alignClass = align === 'start' ? stackStyles.alignStart :
-                       align === 'center' ? stackStyles.alignCenter :
-                       align === 'end' ? stackStyles.alignEnd :
-                       stackStyles.alignStretch;
-    
-    const justifyClass = justify === 'start' ? stackStyles.justifyStart :
-                         justify === 'center' ? stackStyles.justifyCenter :
-                         justify === 'end' ? stackStyles.justifyEnd :
-                         stackStyles.justifyBetween;
-    
-    const combinedClassName = stylex.props(
-      stackStyles.base,
-      alignClass,
-      justifyClass
-    ).className + (className ? ` ${className}` : '');
+    const stylexClassName = stylex.props(stackStyles.base).className;
+    const classNames = ['stack', stylexClassName];
+    if (className) {
+      classNames.push(className);
+    }
+    const combinedClassName = classNames.join(' ');
     
     // Clone children to add refs for layout transitions
     const childrenWithRefs = useMemo(() => {
@@ -215,6 +192,8 @@ export const Stack = forwardRef<HTMLElement, StackProps>(
         className={combinedClassName}
         style={{
           '--stack-gap': gap,
+          '--stack-align': alignValue,
+          '--stack-justify': justifyValue,
           ...style,
         } as React.CSSProperties}
         data-responsive={dataResponsive}

@@ -34,6 +34,17 @@ export {
   type SequenceStage,
   type MotionValueKeyframeConfig,
 } from './motion-compiler';
+export {
+  defineAnimationStates,
+  generateStateTypes,
+  type AnimationStateSet,
+  type AnimationStatesConfig,
+  type AnimationStateDefinition,
+  type TransitionConfig,
+  type PropertyValue,
+  type DefineAnimationStatesOptions,
+  type StateMetadata,
+} from './animation-states-compiler';
 export { solveSpring, shouldPrecompute, type SpringConfig } from './spring-solver';
 export { 
   generateKeyframes, 

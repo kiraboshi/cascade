@@ -16,7 +16,17 @@
     "composite": true,
     "incremental": true,
     "jsx": "react-jsx",
-    "jsxImportSource": "react"
+    "jsxImportSource": "react",
+    "noEmit": true,
+    "baseUrl": ".",
+    "paths": {
+      "@cascade/core": ["./packages/core/src"],
+      "@cascade/tokens": ["./packages/tokens/src"],
+      "@cascade/compiler": ["./packages/compiler/src"],
+      "@cascade/react": ["./packages/react/src"],
+      "@cascade/motion-runtime": ["./packages/motion-runtime/src"],
+      "@cascade/motion-gestures": ["./packages/motion-gestures/src"]
+    }
   },
   "exclude": ["node_modules", "dist", "**/*.test.ts", "**/*.test.tsx"]
 }

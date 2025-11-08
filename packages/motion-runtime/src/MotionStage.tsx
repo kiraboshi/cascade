@@ -5,9 +5,10 @@
 import { forwardRef, useEffect, useLayoutEffect, useRef, useState, type ReactNode, type CSSProperties } from 'react';
 import { useLayoutTransition, type LayoutTransitionConfig } from './useLayoutTransition';
 import { warnDuplicateClass, warnMissingCSS } from './dev-warnings';
+import type { AnimationStateSet } from '@cascade/compiler';
 
 export interface MotionStageProps {
-  animation?: string | { className: string; css?: string };
+  animation?: string | { className: string; css?: string } | AnimationStateSet | { stateSet: AnimationStateSet; state?: string };
   delay?: number | 'until-previous-completes';
   onComplete?: (event: { next: () => void }) => void;
   onStart?: () => void;
@@ -46,36 +47,67 @@ export const MotionStage = forwardRef<HTMLDivElement, MotionStageProps>(function
   
   useLayoutTransition(elementRef, layoutTransitionConfig);
   
+  // Handle animation state set
+  const isStateSet = animation && typeof animation === 'object' && 'id' in animation && 'classes' in animation;
+  const stateSet = isStateSet ? (animation as AnimationStateSet) : null;
+  const stateSetState = animation && typeof animation === 'object' && 'stateSet' in animation 
+    ? (animation as { stateSet: AnimationStateSet; state?: string }).state || 'animate'
+    : null;
+  
   const animationClassName = animation
     ? typeof animation === 'string' 
       ? animation 
-      : animation.className
+      : isStateSet
+        ? stateSet!.classes[stateSetState || 'animate'] || stateSet!.classes[Object.keys(stateSet!.classes)[0]]
+        : 'css' in animation
+          ? animation.className
+          : undefined
     : undefined;
 
   // Inject CSS synchronously if provided (before first render to prevent flash)
-  if (animation && typeof animation === 'object' && animation.css) {
-    const styleId = `motion-style-${animation.className}`;
-    if (typeof document !== 'undefined' && !document.getElementById(styleId)) {
-      const styleElement = document.createElement('style');
-      styleElement.id = styleId;
-      styleElement.textContent = animation.css;
-      document.head.appendChild(styleElement);
-    }
-  }
-
-  // Use useLayoutEffect to ensure CSS is injected before browser paint
-  useLayoutEffect(() => {
-    // Inject CSS if provided
-    if (animation && typeof animation === 'object' && animation.css) {
+  if (animation && typeof animation === 'object') {
+    if (isStateSet && stateSet!.css) {
+      const styleId = `animation-states-${stateSet!.id}`;
+      if (typeof document !== 'undefined' && !document.getElementById(styleId)) {
+        const styleElement = document.createElement('style');
+        styleElement.id = styleId;
+        styleElement.textContent = stateSet!.css;
+        document.head.appendChild(styleElement);
+      }
+    } else if ('css' in animation && animation.css) {
       const styleId = `motion-style-${animation.className}`;
-      if (!document.getElementById(styleId)) {
+      if (typeof document !== 'undefined' && !document.getElementById(styleId)) {
         const styleElement = document.createElement('style');
         styleElement.id = styleId;
         styleElement.textContent = animation.css;
         document.head.appendChild(styleElement);
       }
     }
-  }, [animation]);
+  }
+
+  // Use useLayoutEffect to ensure CSS is injected before browser paint
+  useLayoutEffect(() => {
+    // Inject CSS if provided
+    if (animation && typeof animation === 'object') {
+      if (isStateSet && stateSet!.css) {
+        const styleId = `animation-states-${stateSet!.id}`;
+        if (!document.getElementById(styleId)) {
+          const styleElement = document.createElement('style');
+          styleElement.id = styleId;
+          styleElement.textContent = stateSet!.css;
+          document.head.appendChild(styleElement);
+        }
+      } else if ('css' in animation && animation.css) {
+        const styleId = `motion-style-${animation.className}`;
+        if (!document.getElementById(styleId)) {
+          const styleElement = document.createElement('style');
+          styleElement.id = styleId;
+          styleElement.textContent = animation.css;
+          document.head.appendChild(styleElement);
+        }
+      }
+    }
+  }, [animation, isStateSet, stateSet, stateSetState]);
   
   useEffect(() => {
     // Skip animation logic if no animation is provided

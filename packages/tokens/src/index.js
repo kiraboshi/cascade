@@ -3,8 +3,8 @@
  *
  * Unified export supporting both DTCG JSON and TypeScript formats
  */
-import tokensJson from '../tokens.json';
-import { tokens } from '../tokens';
+import tokensJson from '../tokens.json' with { type: 'json' };
+import { tokens } from '../tokens.js';
 // Re-export TypeScript tokens
 export { tokens };
 // Export DTCG JSON for tooling compatibility
@@ -25,7 +25,7 @@ export function resolveToken(category, key) {
     const dtcgCategory = dtcgTokens[category];
     if (dtcgCategory && typeof dtcgCategory === 'object') {
         const dtcgValue = dtcgCategory[key];
-        if (dtcgValue && typeof dtcgValue === 'object' && '$value' in dtcgValue) {
+        if (dtcgValue && typeof dtcgValue === 'object' && dtcgValue !== null && '$value' in dtcgValue) {
             return String(dtcgValue.$value);
         }
     }

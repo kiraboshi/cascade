@@ -5,8 +5,8 @@
 
 import { useEffect, useRef } from 'react';
 import { Stack } from '@cascade/react';
-import { useScale, useMotionValue, MotionSequence, MotionStage } from '@cascade/motion-runtime';
-import { defineMotion } from '@cascade/compiler';
+import { useMotionValue, MotionSequence, MotionStage, useAnimationStatesWithGestures } from '@cascade/motion-runtime';
+import { defineMotion, defineAnimationStates } from '@cascade/compiler';
 import { tokens } from '@cascade/tokens';
 import { useMotionStyles } from './useMotionStyles';
 
@@ -64,17 +64,23 @@ export function AnimatedHero({
   // Inject CSS styles using reusable hook
   useMotionStyles([heroTitleAnimation, heroSubtitleAnimation, heroCTAAnimation], 'hero-animations');
   
-  const ctaScale = useScale(0.95);
   const gradientProgress = useMotionValue(0, { property: 'background' });
   const sectionRef = useRef<HTMLElement>(null);
-
-  // Animate CTA scale
-  useEffect(() => {
-    ctaScale.animateTo(1, {
-      duration: 300,
-      easing: 'ease-out',
-    });
-  }, [ctaScale]);
+  
+  // Define CTA button animation states
+  const ctaButtonStates = defineAnimationStates({
+    initial: { scale: 0.95 },
+    animate: { scale: 1, transition: { duration: 300 } },
+    hover: { scale: 1.05, transition: { duration: 200 } },
+    tap: { scale: 0.95, transition: { duration: 100 } },
+  });
+  
+  const ctaAnimation = useAnimationStatesWithGestures(ctaButtonStates, {
+    initial: 'initial',
+    animate: 'animate',
+    hover: true,
+    tap: true,
+  });
 
   // Animate gradient background
   useEffect(() => {
@@ -105,11 +111,11 @@ export function AnimatedHero({
     // Animate gradient in a smooth loop
     const animateGradient = async () => {
       while (true) {
-        await gradientProgress.animateTo(1, {
+        await (gradientProgress as any).animateTo(1, {
           duration: 10000,
           easing: 'ease-in-out',
         });
-        await gradientProgress.animateTo(0, {
+        await (gradientProgress as any).animateTo(0, {
           duration: 10000,
           easing: 'ease-in-out',
         });
@@ -173,12 +179,22 @@ export function AnimatedHero({
               </p>
               {ctaText && (
                 <div
+                  ref={(el) => {
+                    if (ctaAnimation.ref.current !== el && el) {
+                      (ctaAnimation.ref as any).current = el.querySelector('button');
+                    }
+                  }}
                   style={{
-                    transform: `scale(var(${ctaScale.cssVarName}))`,
                     marginTop: 'var(--cascade-space-sm)',
                   }}
                 >
                   <button
+                    ref={(el) => {
+                      if (ctaAnimation.ref.current !== el && el) {
+                        (ctaAnimation.ref as any).current = el;
+                      }
+                    }}
+                    className={ctaAnimation.className}
                     style={{
                       padding: 'var(--cascade-space-md) var(--cascade-space-xl)',
                       fontSize: tokens.typography.fontSize.base,
@@ -188,11 +204,8 @@ export function AnimatedHero({
                       border: 'none',
                       borderRadius: '8px',
                       cursor: 'pointer',
-                      transition: 'transform 0.2s ease',
                     }}
                     onClick={onCtaClick}
-                    onMouseEnter={() => ctaScale.animateTo(1.05, { duration: 200 })}
-                    onMouseLeave={() => ctaScale.animateTo(1, { duration: 200 })}
                   >
                     {ctaText}
                   </button>

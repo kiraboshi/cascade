@@ -140,7 +140,12 @@ export const Cluster = forwardRef<HTMLElement, ClusterProps>(
       };
     }, [detectWrapping]);
     
-    const combinedClassName = stylex.props(clusterStyles.base).className + (className ? ` ${className}` : '');
+    const stylexClassName = stylex.props(clusterStyles.base).className;
+    const classNames = ['cluster', stylexClassName];
+    if (className) {
+      classNames.push(className);
+    }
+    const combinedClassName = classNames.join(' ');
     
     // Clone children to add refs for layout transitions
     const childrenWithRefs = useMemo(() => {

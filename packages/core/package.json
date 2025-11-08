@@ -1,13 +1,14 @@
 {
   "name": "@cascade/core",
   "version": "0.1.0",
+  "type": "module",
   "description": "Foundation CSS with @layer architecture and token CSS variables",
   "main": "./dist/index.js",
-  "module": "./dist/index.mjs",
+  "module": "./dist/index.js",
   "types": "./dist/index.d.ts",
   "exports": {
     ".": {
-      "import": "./dist/index.mjs",
+      "import": "./dist/index.js",
       "require": "./dist/index.js",
       "types": "./dist/index.d.ts"
     },
@@ -17,7 +18,7 @@
     "dist"
   ],
   "scripts": {
-    "build": "tsc && node scripts/generate-foundation.js",
+    "build": "tsc && node scripts/generate-foundation.mjs",
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {

@@ -5,9 +5,10 @@
 
 import { forwardRef, useRef, useEffect, type HTMLAttributes, type RefObject } from 'react';
 import * as stylex from '@stylexjs/stylex';
-import { tokens, type SpaceToken } from '@cascade/tokens';
+import { type SpaceToken } from '@cascade/tokens';
 import { useLayoutTransition, type LayoutTransitionConfig } from '@cascade/motion-runtime';
 import { useFocusTrap, useFocusRestore } from './accessibility';
+import { resolveSpacing } from './utils/token-resolvers';
 
 const impostorStyles = stylex.create({
   base: {
@@ -124,10 +125,6 @@ export interface ImposterProps extends Omit<HTMLAttributes<HTMLDivElement>, 'sty
 /**
  * Resolve spacing token to CSS value
  */
-function resolveSpacing(spacing: SpaceToken | undefined): string {
-  if (!spacing) return '0';
-  return tokens.space[spacing];
-}
 
 export const Imposter = forwardRef<HTMLElement, ImposterProps>(
   ({ 

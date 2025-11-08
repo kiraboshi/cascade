@@ -5,9 +5,10 @@
 
 import { forwardRef, useRef, useMemo, Children, cloneElement, isValidElement, type HTMLAttributes, type ReactElement } from 'react';
 import * as stylex from '@stylexjs/stylex';
-import { tokens, type SpaceToken } from '@cascade/tokens';
+import { type SpaceToken } from '@cascade/tokens';
 import { useLayoutTransition, useBatchLayoutTransition, type LayoutTransitionConfig } from '@cascade/motion-runtime';
 import { useGridKeyboardNavigation } from './accessibility';
+import { resolveGap } from './utils/token-resolvers';
 
 const gridStyles = stylex.create({
   base: {
@@ -114,21 +115,6 @@ export interface GridProps extends Omit<HTMLAttributes<HTMLDivElement>, 'style'>
   as?: keyof JSX.IntrinsicElements;
 }
 
-/**
- * Resolve gap token or array to CSS value
- */
-function resolveGap(gap: SpaceToken | SpaceToken[] | undefined): string {
-  if (!gap) return '0';
-  
-  if (Array.isArray(gap)) {
-    const [row, column] = gap;
-    const rowValue = tokens.space[row];
-    const columnValue = tokens.space[column];
-    return `${rowValue} ${columnValue}`;
-  }
-  
-  return tokens.space[gap];
-}
 
 /**
  * Resolve columns to CSS grid-template-columns value

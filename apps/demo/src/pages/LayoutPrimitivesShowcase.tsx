@@ -26,81 +26,71 @@ import {
   useScale,
   useFadeInOnScroll,
   useSlideInOnScroll,
+  AnimatePresence,
+  useAnimationStatesWithGestures,
 } from '@cascade/motion-runtime';
 import { tokens } from '@cascade/tokens';
+import { defineAnimationStates } from '@cascade/compiler';
 
-// Animated Card Component
+// Animated Card Component using Animation States
+const cardAnimationStates = defineAnimationStates({
+  initial: {
+    opacity: 0,
+    transform: 'translateY(30px) scale(0.95)',
+  },
+  animate: {
+    opacity: 1,
+    transform: 'translateY(0) scale(1)',
+    transition: {
+      duration: 600,
+      easing: 'ease-out',
+    },
+  },
+  hover: {
+    transform: 'translateY(-4px) scale(1.02)',
+    boxShadow: '0 8px 12px rgba(0, 0, 0, 0.15)',
+    transition: {
+      duration: 200,
+      easing: 'ease-out',
+    },
+  },
+});
+
 function AnimatedCard({ delay = 0, children }: { delay?: number; children: React.ReactNode }) {
-  const cardRef = useRef<HTMLDivElement>(null);
-  const [element, setElement] = useState<HTMLElement | null>(null);
-  const opacity = useMotionValue(0, { property: 'opacity', element: element || undefined });
-  const y = useTranslateY(30, { element: element || undefined });
-  const scale = useScale(0.95, { element: element || undefined });
-  const [currentY, setCurrentY] = useState(30);
-  const [currentScale, setCurrentScale] = useState(0.95);
-  const [transformVarName, setTransformVarName] = useState('');
+  const animation = useAnimationStatesWithGestures(cardAnimationStates, {
+    initial: 'initial',
+    animate: 'animate',
+    hover: true,
+  });
 
-  // Set element when ref is available
+  // Apply delay
   useEffect(() => {
-    if (cardRef.current) {
-      setElement(cardRef.current);
+    if (delay > 0) {
+      const timer = setTimeout(() => {
+        animation.animateTo('animate');
+      }, delay);
+      return () => clearTimeout(timer);
     }
-  }, []);
+  }, [delay, animation]);
 
-  // Wait for element ID to be assigned
-  useEffect(() => {
-    if (!element) return;
-    
-    const checkId = () => {
-      if (element.dataset.motionElementId) {
-        const varName = `--motion-transform-${element.dataset.motionElementId}`;
-        setTransformVarName(varName);
-      } else {
-        requestAnimationFrame(checkId);
-      }
-    };
-    checkId();
-  }, [element]);
-
-  // Subscribe to value changes
-  useEffect(() => {
-    const unsubY = y.onChange(setCurrentY);
-    const unsubScale = scale.onChange(setCurrentScale);
-    return () => {
-      unsubY();
-      unsubScale();
-    };
-  }, [y, scale]);
-
-  useEffect(() => {
-    const timer = setTimeout(() => {
-      opacity.animateTo(1, { duration: 600, easing: 'ease-out' });
-      y.animateTo(0, { duration: 600, easing: 'ease-out' });
-      scale.animateTo(1, { duration: 600, easing: 'ease-out' });
-    }, delay);
-
-    return () => clearTimeout(timer);
-  }, [opacity, y, scale, delay]);
+  // Combine refs for gesture detection
+  const combinedRef = useCallback((el: HTMLDivElement | null) => {
+    if (el && (animation.ref as any).callback) {
+      (animation.ref as any).callback(el);
+    } else if (el && animation.ref) {
+      (animation.ref as any).current = el;
+    }
+  }, [animation.ref]);
 
   return (
     <Box
-      ref={cardRef}
+      ref={combinedRef}
       padding="lg"
       borderRadius="md"
       background="white"
+      className={animation.className}
       style={{
-        opacity: `var(${opacity.cssVarName})`,
-        transform: transformVarName 
-          ? `var(${transformVarName})` 
-          : `translateY(${currentY}px) scale(${currentScale})`,
         boxShadow: '0 4px 6px rgba(0, 0, 0, 0.1)',
-        transition: 'box-shadow 0.3s ease',
-      }}
-      onMouseEnter={(e) => {
-        e.currentTarget.style.boxShadow = '0 8px 12px rgba(0, 0, 0, 0.15)';
-      }}
-      onMouseLeave={(e) => {
-        e.currentTarget.style.boxShadow = '0 4px 6px rgba(0, 0, 0, 0.1)';
       }}
     >
       {children}
@@ -1485,85 +1475,106 @@ function AccessibilityExamples() {
               Open Modal
             </button>
             
-            {isModalOpen && (
-              <>
-                {/* Backdrop */}
-                <div
-                  style={{
-                    position: 'fixed',
-                    top: 0,
-                    left: 0,
-                    right: 0,
-                    bottom: 0,
-                    backgroundColor: 'rgba(0, 0, 0, 0.5)',
-                    zIndex: 999,
-                  }}
-                  onClick={() => setIsModalOpen(false)}
-                />
-                
-                {/* Modal */}
-                <Imposter
-                  breakout
-                  ariaLabelledBy="modal-title"
-                  ariaDescribedBy="modal-desc"
-                  ariaModal={true}
-                  maxWidth="500px"
-                  margin="md"
-                  style={{
-                    zIndex: 1000,
-                    backgroundColor: 'white',
-                    borderRadius: '8px',
-                    padding: '2rem',
-                  }}
-                >
-                  <h2 id="modal-title" ref={modalTitleRef}>Accessible Modal</h2>
-                  <p id="modal-desc">This modal demonstrates focus trapping. Press Tab to cycle through elements, Escape to close.</p>
-                  <Stack spacing="md" style={{ marginTop: '1rem' }}>
-                    <input 
-                      type="text" 
-                      placeholder="Name"
-                      style={{ padding: '0.5rem', border: '1px solid #ccc', borderRadius: '4px' }}
-                    />
-                    <input 
-                      type="email" 
-                      placeholder="Email"
-                      style={{ padding: '0.5rem', border: '1px solid #ccc', borderRadius: '4px' }}
-                    />
-                    <Cluster spacing="md" justify="end">
-                      <button
-                        onClick={() => setIsModalOpen(false)}
-                        style={{
-                          padding: '0.5rem 1rem',
-                          backgroundColor: '#6b7280',
-                          color: 'white',
-                          border: 'none',
-                          borderRadius: '4px',
-                          cursor: 'pointer',
-                        }}
-                      >
-                        Cancel
-                      </button>
-                      <button
-                        onClick={() => {
-                          setIsModalOpen(false);
-                          announce('Form submitted successfully');
-                        }}
-                        style={{
-                          padding: '0.5rem 1rem',
-                          backgroundColor: '#3b82f6',
-                          color: 'white',
-                          border: 'none',
-                          borderRadius: '4px',
-                          cursor: 'pointer',
-                        }}
-                      >
-                        Submit
-                      </button>
-                    </Cluster>
-                  </Stack>
-                </Imposter>
-              </>
-            )}
+            <AnimatePresence
+              exit={{
+                opacity: 0,
+                config: { duration: 200 },
+              }}
+              enter={{
+                opacity: 0,
+                config: { duration: 200 },
+              }}
+            >
+              {isModalOpen && (
+                <>
+                  {/* Backdrop */}
+                  <div
+                    key="modal-overlay"
+                    onClick={() => setIsModalOpen(false)}
+                    style={{
+                      position: 'fixed',
+                      top: 0,
+                      left: 0,
+                      right: 0,
+                      bottom: 0,
+                      backgroundColor: 'rgba(0, 0, 0, 0.5)',
+                      zIndex: 999,
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                    }}
+                  />
+                  
+                  {/* Modal */}
+                  <Imposter
+                    key="modal-content"
+                    breakout
+                    ariaLabelledBy="modal-title"
+                    ariaDescribedBy="modal-desc"
+                    ariaModal={true}
+                    maxWidth="500px"
+                    margin="md"
+                    style={{
+                      zIndex: 1000,
+                      backgroundColor: 'white',
+                      borderRadius: '8px',
+                      padding: '2rem',
+                      position: 'fixed',
+                      top: '50%',
+                      left: '50%',
+                      transform: 'translate(-50%, -50%)',
+                    }}
+                    onClick={(e) => e.stopPropagation()}
+                  >
+                    <h2 id="modal-title" ref={modalTitleRef}>Accessible Modal</h2>
+                    <p id="modal-desc">This modal demonstrates focus trapping. Press Tab to cycle through elements, Escape to close.</p>
+                    <Stack spacing="md" style={{ marginTop: '1rem' }}>
+                      <input 
+                        type="text" 
+                        placeholder="Name"
+                        style={{ padding: '0.5rem', border: '1px solid #ccc', borderRadius: '4px' }}
+                      />
+                      <input 
+                        type="email" 
+                        placeholder="Email"
+                        style={{ padding: '0.5rem', border: '1px solid #ccc', borderRadius: '4px' }}
+                      />
+                      <Cluster spacing="md" justify="end">
+                        <button
+                          onClick={() => setIsModalOpen(false)}
+                          style={{
+                            padding: '0.5rem 1rem',
+                            backgroundColor: '#6b7280',
+                            color: 'white',
+                            border: 'none',
+                            borderRadius: '4px',
+                            cursor: 'pointer',
+                          }}
+                        >
+                          Cancel
+                        </button>
+                        <button
+                          onClick={() => {
+                            setIsModalOpen(false);
+                            announce('Form submitted successfully');
+                          }}
+                          style={{
+                            padding: '0.5rem 1rem',
+                            backgroundColor: '#3b82f6',
+                            color: 'white',
+                            border: 'none',
+                            borderRadius: '4px',
+                            cursor: 'pointer',
+                          }}
+                        >
+                          Submit
+                        </button>
+                      </Cluster>
+                    </Stack>
+                  </Imposter>
+                </>
+              )}
+            </AnimatePresence>
           </Box>
           
           {/* Live Region Example */}

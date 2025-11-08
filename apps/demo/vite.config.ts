@@ -6,6 +6,8 @@ import { cascadeVitePlugin } from '../../packages/compiler/src/vite-plugin';
 
 // Plugin to fix workspace package resolution during config loading
 function workspacePackageResolver(): Plugin {
+  const packagesPath = path.resolve(__dirname, '../../packages');
+  
   return {
     name: 'workspace-package-resolver',
     enforce: 'pre',
@@ -32,6 +34,27 @@ function workspacePackageResolver(): Plugin {
           return packagePath;
         }
       }
+    },
+    configureServer(server) {
+      // Explicitly watch the packages directory to ensure HMR works
+      server.watcher.add(packagesPath);
+      
+      // Watch for changes in package source files
+      server.watcher.on('change', (file) => {
+        // Normalize paths for cross-platform compatibility
+        const normalizedFile = path.normalize(file);
+        const normalizedPackagesPath = path.normalize(packagesPath);
+        
+        // If a package source file changes, invalidate modules that depend on it
+        if (normalizedFile.startsWith(normalizedPackagesPath)) {
+          const modules = Array.from(server.moduleGraph.urlToModuleMap.values());
+          for (const mod of modules) {
+            if (mod.url.includes('@cascade') || mod.url.includes('packages')) {
+              server.moduleGraph.invalidateModule(mod);
+            }
+          }
+        }
+      });
     },
   };
 }
@@ -106,12 +129,23 @@ export default defineConfig({
       '@cascade/motion-gestures',
       '@cascade/tokens',
     ],
+    // Don't cache excluded packages - process them fresh on each import
+    // This ensures workspace package changes are immediately reflected
   },
   ssr: {
     noExternal: ['@cascade/core', '@cascade/tokens', '@cascade/compiler'],
   },
   server: {
     port: 3000,
+    // Explicitly watch packages directory for changes
+    watch: {
+      // Watch the packages directory for source file changes
+      ignored: ['**/node_modules/**', '**/dist/**'],
+    },
+    // Enable HMR with proper configuration
+    hmr: {
+      overlay: true,
+    },
   },
 });
 

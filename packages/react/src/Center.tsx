@@ -5,8 +5,9 @@
 
 import { forwardRef, useRef, type HTMLAttributes } from 'react';
 import * as stylex from '@stylexjs/stylex';
-import { tokens, type SpaceToken } from '@cascade/tokens';
+import { type SpaceToken } from '@cascade/tokens';
 import { useLayoutTransition, type LayoutTransitionConfig } from '@cascade/motion-runtime';
+import { resolveSpacing } from './utils/token-resolvers';
 
 const centerStyles = stylex.create({
   base: {
@@ -84,22 +85,6 @@ export interface CenterProps extends Omit<HTMLAttributes<HTMLDivElement>, 'style
   as?: keyof JSX.IntrinsicElements;
 }
 
-/**
- * Resolve spacing token or array to CSS value
- */
-function resolveSpacing(spacing: SpaceToken | SpaceToken[] | undefined): string {
-  if (!spacing) return '0';
-  
-  if (Array.isArray(spacing)) {
-    const [vertical, horizontal] = spacing;
-    const verticalValue = tokens.space[vertical];
-    const horizontalValue = tokens.space[horizontal];
-    return `${verticalValue} ${horizontalValue}`;
-  }
-  
-  return tokens.space[spacing];
-}
-
 export const Center = forwardRef<HTMLElement, CenterProps>(
   ({ 
     centerText = false,
@@ -157,10 +142,15 @@ export const Center = forwardRef<HTMLElement, CenterProps>(
     
     // Determine if we need flex centering for children
     const needsFlexCenter = centerChildren;
-    const combinedClassName = stylex.props(
+    const stylexClassName = stylex.props(
       centerStyles.base,
       needsFlexCenter && centerStyles.flexCenter
-    ).className + (className ? ` ${className}` : '');
+    ).className;
+    const classNames = ['center', stylexClassName];
+    if (className) {
+      classNames.push(className);
+    }
+    const combinedClassName = classNames.join(' ');
     
     // Merge refs
     const mergedRef = (element: HTMLElement | null) => {

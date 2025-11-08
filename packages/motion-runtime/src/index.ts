@@ -38,6 +38,12 @@ export { AnimatePresence, type AnimatePresenceProps } from './AnimatePresence';
 export { applyExitAnimation, applyEnterAnimation, type ExitAnimationConfig, type EnterAnimationConfig } from './animate-presence-utils';
 export { useAnimatePresence, type UseAnimatePresenceConfig, type UseAnimatePresenceReturn } from './useAnimatePresence';
 
+// Animation States
+export { useAnimationStates, type UseAnimationStatesOptions, type AnimationStatesControls } from './useAnimationStates';
+export { useAnimationStatesWithGestures, type UseAnimationStatesWithGesturesOptions, type AnimationStatesWithGesturesResult } from './useAnimationStatesWithGestures';
+export { useAnimationStatesWithChildren, type UseAnimationStatesWithChildrenOptions, type AnimationStatesWithChildrenControls } from './useAnimationStatesWithChildren';
+export { useRuntimeMotionValues, applyRuntimeState } from './useAnimationStatesRuntime';
+
 // Development utilities (for advanced use cases)
 export { 
   setWarningsEnabled, 

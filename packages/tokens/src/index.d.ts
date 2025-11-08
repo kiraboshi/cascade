@@ -3,7 +3,7 @@
  *
  * Unified export supporting both DTCG JSON and TypeScript formats
  */
-import { tokens, type TokenKey, type ColorToken, type SpaceToken, type MotionDurationToken } from '../tokens';
+import { tokens, type TokenKey, type ColorToken, type SpaceToken, type MotionDurationToken } from '../tokens.js';
 export { tokens, type TokenKey, type ColorToken, type SpaceToken, type MotionDurationToken };
 export declare const dtcgTokens: {
     $schema: string;
@@ -135,6 +135,10 @@ export declare const dtcgTokens: {
     };
     layout: {
         breakpoint: {
+            xs: {
+                $value: string;
+                $type: string;
+            };
             sm: {
                 $value: string;
                 $type: string;
@@ -144,6 +148,10 @@ export declare const dtcgTokens: {
                 $type: string;
             };
             lg: {
+                $value: string;
+                $type: string;
+            };
+            xl: {
                 $value: string;
                 $type: string;
             };

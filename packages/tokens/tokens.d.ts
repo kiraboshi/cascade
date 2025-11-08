@@ -53,9 +53,11 @@ export declare const tokens: {
     };
     readonly layout: {
         readonly breakpoint: {
+            readonly xs: "20rem";
             readonly sm: "40rem";
             readonly md: "64rem";
             readonly lg: "80rem";
+            readonly xl: "90rem";
         };
     };
 };

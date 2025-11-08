@@ -10,6 +10,13 @@ export interface TokenResolverOptions {
 }
 
 /**
+ * Convert camelCase to kebab-case
+ */
+function camelToKebab(str: string): string {
+  return str.replace(/([a-z0-9])([A-Z])/g, '$1-$2').toLowerCase();
+}
+
+/**
  * Resolve a token value to CSS custom property format
  */
 export function resolveTokenValue(
@@ -47,7 +54,10 @@ export function generateTokenCSS(options: TokenResolverOptions = {}): string {
   // Generate from TypeScript tokens
   const processCategory = (category: string, values: Record<string, unknown>, parentPath: string[] = []) => {
     for (const [key, value] of Object.entries(values)) {
-      const varName = [...parentPath, category, key].join('-');
+      // Convert camelCase keys to kebab-case for CSS variable names
+      const kebabKey = camelToKebab(key);
+      const kebabCategory = camelToKebab(category);
+      const varName = [...parentPath.map(camelToKebab), kebabCategory, kebabKey].join('-');
       
       if (typeof value === 'string') {
         cssVars.push(`  ${prefix}-${varName}: ${resolveTokenValue(value, options)};`);

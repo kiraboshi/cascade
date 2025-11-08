@@ -10,13 +10,10 @@ import { useLayoutTransition, useBatchLayoutTransition, type LayoutTransitionCon
 
 const splitStyles = stylex.create({
   base: {
-    display: 'grid',
-    gridTemplateColumns: 'var(--split-template-columns)',
+    display: 'flex',
+    flexDirection: 'row',
     gap: 'var(--split-gap, 0)',
     alignItems: 'var(--split-align, stretch)',
-  },
-  stack: {
-    gridTemplateColumns: '1fr',
   },
 });
 
@@ -93,11 +90,12 @@ export interface SplitProps extends Omit<HTMLAttributes<HTMLDivElement>, 'style'
 }
 
 /**
- * Parse fraction string and generate grid template columns
+ * Parse fraction string and generate flex values for two children
+ * Returns [firstFlex, secondFlex] where flex values are used for flex-grow
  */
-function parseFraction(fraction: string = '1/2'): string {
+function parseFraction(fraction: string = '1/2'): { first: number; second: number } {
   if (fraction === 'auto') {
-    return 'auto 1fr'; // First column auto, second takes remaining
+    return { first: 0, second: 1 }; // First column auto (flex: 0 1 auto), second takes remaining (flex: 1)
   }
   
   // Parse fraction like '1/2', '1/3', '2/3'
@@ -108,13 +106,14 @@ function parseFraction(fraction: string = '1/2'): string {
     
     if (!isNaN(numerator) && !isNaN(denominator) && denominator !== 0) {
       const ratio = numerator / denominator;
-      // Return two columns: first gets the fraction, second gets the remainder
-      return `${ratio}fr ${1 - ratio}fr`;
+      // For flexbox: use the ratio and remainder as flex-grow values
+      // e.g., 1/2 -> flex: 1 and flex: 1, 1/3 -> flex: 1 and flex: 2
+      return { first: numerator, second: denominator - numerator };
     }
   }
   
   // Default to 1/2 if parsing fails
-  return '1fr 1fr';
+  return { first: 1, second: 1 };
 }
 
 export const Split = forwardRef<HTMLElement, SplitProps>(
@@ -176,12 +175,11 @@ export const Split = forwardRef<HTMLElement, SplitProps>(
     // Resolve gutter token
     const gutterValue = gutter ? tokens.space[gutter] : '0';
     
-    // Parse fraction to grid template
-    const gridTemplate = parseFraction(fraction);
+    // Parse fraction to flex values
+    const flexValues = parseFraction(fraction);
     
     // Generate responsive data-attributes for CSS selectors (viewport-based)
     const responsiveAttrs: string[] = [];
-    let shouldStack = switchTo === 'stack';
     
     if (responsive) {
       for (const [breakpoint, overrides] of Object.entries(responsive)) {
@@ -193,9 +191,6 @@ export const Split = forwardRef<HTMLElement, SplitProps>(
         }
         if (overrides.switchTo) {
           responsiveAttrs.push(`${breakpoint}:switch-to-${overrides.switchTo}`);
-          if (overrides.switchTo === 'stack') {
-            shouldStack = true;
-          }
         }
         if (overrides.align) {
           responsiveAttrs.push(`${breakpoint}:align-${overrides.align}`);
@@ -207,6 +202,7 @@ export const Split = forwardRef<HTMLElement, SplitProps>(
     // Generate CSS variables for container queries
     // Container queries check container size directly - no data attributes needed
     const containerQueryStyles: Record<string, string> = {};
+    const hasContainerQueries = !!(containerQueries?.minWidth || containerQueries?.maxWidth);
     
     if (containerQueries?.minWidth) {
       for (const [width, overrides] of Object.entries(containerQueries.minWidth)) {
@@ -214,8 +210,9 @@ export const Split = forwardRef<HTMLElement, SplitProps>(
         
         // Set CSS variables that container queries will use
         if (overrides.fraction !== undefined) {
-          const overrideTemplate = parseFraction(overrides.fraction);
-          containerQueryStyles[`--split-template-columns-${normalizedWidth}`] = overrideTemplate;
+          const overrideFlex = parseFraction(overrides.fraction);
+          containerQueryStyles[`--split-flex-first-${normalizedWidth}`] = String(overrideFlex.first);
+          containerQueryStyles[`--split-flex-second-${normalizedWidth}`] = String(overrideFlex.second);
         }
         if (overrides.gutter) {
           const gutterValue = tokens.space[overrides.gutter];
@@ -229,24 +226,18 @@ export const Split = forwardRef<HTMLElement, SplitProps>(
         
         // Set CSS variables for max-width container queries
         if (overrides.fraction !== undefined) {
-          const overrideTemplate = parseFraction(overrides.fraction);
-          containerQueryStyles[`--split-template-columns-max-${normalizedWidth}`] = overrideTemplate;
+          const overrideFlex = parseFraction(overrides.fraction);
+          containerQueryStyles[`--split-flex-first-max-${normalizedWidth}`] = String(overrideFlex.first);
+          containerQueryStyles[`--split-flex-second-max-${normalizedWidth}`] = String(overrideFlex.second);
         }
         if (overrides.gutter) {
           const gutterValue = tokens.space[overrides.gutter];
           containerQueryStyles[`--split-gap-max-${normalizedWidth}`] = gutterValue;
         }
-        // Check if stacking should occur
-        if (overrides.switchTo === 'stack') {
-          shouldStack = true;
-        }
       }
     }
     
-    const stylexClassName = stylex.props(
-      splitStyles.base,
-      shouldStack && splitStyles.stack
-    ).className;
+    const stylexClassName = stylex.props(splitStyles.base).className;
     const classNames = ['split', stylexClassName];
     if (className) {
       classNames.push(className);
@@ -259,7 +250,7 @@ export const Split = forwardRef<HTMLElement, SplitProps>(
                        align === 'center' ? 'center' :
                        'stretch';
     
-    // Clone children to add refs for layout transitions
+    // Clone children to add refs for layout transitions (same pattern as Sidebar)
     const childrenWithRefs = useMemo(() => {
       if (!animate || !Array.isArray(children)) return children;
       
@@ -292,15 +283,24 @@ export const Split = forwardRef<HTMLElement, SplitProps>(
       }
     };
     
+    // Set CSS variables (same pattern as Sidebar)
+    // Flex values are applied via CSS using :nth-child selectors
+    const baseStyles: Record<string, string> = {
+      '--split-flex-first': String(flexValues.first),
+      '--split-flex-second': String(flexValues.second),
+      '--split-gap': gutterValue,
+      '--split-gap-base': gutterValue, // For container query fallbacks
+      '--split-align': alignValue,
+      ...(threshold && { '--split-threshold': threshold }),
+      ...(fraction === 'auto' && { '--split-flex-first': '0' }), // Override for auto
+    };
+    
     return (
       <Component
         ref={mergedRef as any}
         className={combinedClassName}
         style={{
-          '--split-template-columns': shouldStack ? '1fr' : gridTemplate,
-          '--split-gap': gutterValue,
-          '--split-align': alignValue,
-          ...(threshold && { '--split-threshold': threshold }),
+          ...baseStyles,
           ...containerQueryStyles,
           ...style,
         } as React.CSSProperties}

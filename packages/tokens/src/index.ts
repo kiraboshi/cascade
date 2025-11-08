@@ -4,8 +4,8 @@
  * Unified export supporting both DTCG JSON and TypeScript formats
  */
 
-import tokensJson from '../tokens.json';
-import { tokens, type TokenKey, type ColorToken, type SpaceToken, type MotionDurationToken } from '../tokens';
+import tokensJson from '../tokens.json' with { type: 'json' };
+import { tokens, type TokenKey, type ColorToken, type SpaceToken, type MotionDurationToken } from '../tokens.js';
 
 // Re-export TypeScript tokens
 export { tokens, type TokenKey, type ColorToken, type SpaceToken, type MotionDurationToken };
@@ -29,9 +29,9 @@ export function resolveToken(category: string, key: string): string {
   // Fallback to DTCG JSON format
   const dtcgCategory = dtcgTokens[category as keyof typeof dtcgTokens];
   if (dtcgCategory && typeof dtcgCategory === 'object') {
-    const dtcgValue = dtcgCategory[key as keyof typeof dtcgCategory];
-    if (dtcgValue && typeof dtcgValue === 'object' && '$value' in dtcgValue) {
-      return String(dtcgValue.$value);
+    const dtcgValue = (dtcgCategory as Record<string, unknown>)[key];
+    if (dtcgValue && typeof dtcgValue === 'object' && dtcgValue !== null && '$value' in dtcgValue) {
+      return String((dtcgValue as { $value: unknown }).$value);
     }
   }
   

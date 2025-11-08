@@ -6,6 +6,7 @@ import { useEffect, useRef, useState, type ReactNode, Children, cloneElement, is
 import { MotionStage, type MotionStageProps } from './MotionStage';
 import { prefersReducedMotion } from './motion-state';
 import type { LayoutTransitionConfig } from './useLayoutTransition';
+import type { AnimationStateSet, TransitionConfig } from '@cascade/compiler';
 
 export interface MotionSequenceProps {
   children: ReactNode;
@@ -18,6 +19,15 @@ export interface MotionSequenceProps {
    * Individual stages can override this with their own `layoutTransition` prop.
    */
   layoutTransition?: boolean | LayoutTransitionConfig;
+  /**
+   * Animation state set for orchestration (staggerChildren, delayChildren)
+   * If provided, stages will be orchestrated based on the state's transition config
+   */
+  animationStateSet?: AnimationStateSet;
+  /**
+   * State name to use for orchestration (default: 'animate')
+   */
+  orchestrationState?: string;
 }
 
 export function MotionSequence({
@@ -27,6 +37,8 @@ export function MotionSequence({
   respectReducedMotion = true,
   pauseOnHover = false,
   layoutTransition,
+  animationStateSet,
+  orchestrationState = 'animate',
 }: MotionSequenceProps) {
   const [currentStageIndex, setCurrentStageIndex] = useState(0);
   const [isPaused, setIsPaused] = useState(false);
@@ -149,6 +161,14 @@ export function MotionSequence({
     };
   }, [pauseOnHover]);
   
+  // Extract orchestration config from animation state set
+  const orchestrationConfig = animationStateSet && animationStateSet.states[orchestrationState]
+    ? (animationStateSet.states[orchestrationState].transition as TransitionConfig | undefined)
+    : undefined;
+  
+  const staggerChildren = orchestrationConfig?.staggerChildren;
+  const delayChildren = orchestrationConfig?.delayChildren || 0;
+  
   // Clone children and inject refs and completion handlers
   const enhancedChildren = validStages.map((stage, index) => {
     const originalOnComplete = stage.props.onComplete;
@@ -161,6 +181,17 @@ export function MotionSequence({
       }
     };
     
+    // Calculate delay based on orchestration config
+    let calculatedDelay: number | 'until-previous-completes' = stage.props.delay ?? 0;
+    
+    if (staggerChildren !== undefined && index > 0) {
+      // Apply stagger: base delay + (index * staggerChildren)
+      calculatedDelay = delayChildren + (index * staggerChildren);
+    } else if (index === 0 && delayChildren > 0) {
+      // First child gets delayChildren
+      calculatedDelay = delayChildren;
+    }
+    
     // Apply default layout transition if provided and stage doesn't have its own
     const layoutTransitionProp = stage.props.layoutTransition !== undefined
       ? stage.props.layoutTransition
@@ -169,6 +200,7 @@ export function MotionSequence({
     return cloneElement(stage, {
       ...stage.props,
       key: stage.key || index,
+      delay: calculatedDelay,
       onComplete: enhancedOnComplete,
       layoutTransition: layoutTransitionProp,
       ref: (el: HTMLDivElement | null) => {

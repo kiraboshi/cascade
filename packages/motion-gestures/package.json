@@ -2,14 +2,15 @@
   "name": "@cascade/motion-gestures",
   "version": "0.1.0",
   "description": "Gesture-driven animations for Cascade Motion",
+  "type": "module",
   "main": "./dist/index.js",
-  "module": "./dist/index.mjs",
+  "module": "./dist/index.js",
   "types": "./dist/index.d.ts",
   "source": "./src/index.ts",
   "exports": {
     ".": {
       "source": "./src/index.ts",
-      "import": "./dist/index.mjs",
+      "import": "./dist/index.js",
       "require": "./dist/index.js",
       "types": "./dist/index.d.ts",
       "default": "./src/index.ts"

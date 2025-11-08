@@ -4,8 +4,9 @@
  */
 
 import { forwardRef, useRef, useMemo, Children, cloneElement, isValidElement, type HTMLAttributes, type ReactElement } from 'react';
-import { tokens, type SpaceToken } from '@cascade/tokens';
+import { type SpaceToken } from '@cascade/tokens';
 import { useLayoutTransition, useBatchLayoutTransition, type LayoutTransitionConfig } from '@cascade/motion-runtime';
+import { resolveGap } from './utils/token-resolvers';
 
 export interface FlexProps extends Omit<HTMLAttributes<HTMLDivElement>, 'style'> {
   // Direction
@@ -79,21 +80,6 @@ export interface FlexProps extends Omit<HTMLAttributes<HTMLDivElement>, 'style'>
   as?: keyof JSX.IntrinsicElements;
 }
 
-/**
- * Resolve gap token or array to CSS value
- */
-function resolveGap(gap: SpaceToken | SpaceToken[] | undefined): string {
-  if (!gap) return '0';
-  
-  if (Array.isArray(gap)) {
-    const [row, column] = gap;
-    const rowValue = tokens.space[row];
-    const columnValue = tokens.space[column];
-    return `${rowValue} ${columnValue}`;
-  }
-  
-  return tokens.space[gap];
-}
 
 /**
  * Resolve flex direction to CSS value
@@ -246,25 +232,6 @@ export const Flex = forwardRef<HTMLElement, FlexProps>(
     }
     const dataResponsive = responsiveAttrs.length > 0 ? responsiveAttrs.join(' ') : undefined;
     
-    // Build inline styles - all properties are inline to ensure dynamic updates work
-    // This is necessary because Flex needs to support fully dynamic direction, wrap, and alignment
-    const inlineStyles: React.CSSProperties = {
-      display: 'flex',
-      flexDirection: directionValue,
-      flexWrap: wrapValue,
-      gap: gapValue,
-      alignItems: alignItemsValue,
-      justifyContent: justifyContentValue,
-      alignContent: alignContentValue,
-      // Merge user-provided styles, but re-apply flex properties after to ensure they override
-      ...style,
-      flexDirection: directionValue,
-      flexWrap: wrapValue,
-      alignItems: alignItemsValue,
-      justifyContent: justifyContentValue,
-      alignContent: alignContentValue,
-    };
-    
     // Merge refs: internal ref for layout transitions + forwarded ref
     const mergedRef = (element: HTMLElement | null) => {
       internalRef.current = element;
@@ -302,14 +269,26 @@ export const Flex = forwardRef<HTMLElement, FlexProps>(
       });
     }, [children, animate, childRefs]);
     
+    const classNames = ['flex'];
+    if (className) {
+      classNames.push(className);
+    }
+    const combinedClassName = classNames.join(' ');
+    
     return (
       <Component
         ref={mergedRef as any}
-        className={className}
-        style={inlineStyles}
+        className={combinedClassName}
+        style={{
+          '--flex-gap': gapValue,
+          '--flex-direction': directionValue,
+          '--flex-wrap': wrapValue,
+          '--flex-align-items': alignItemsValue,
+          '--flex-justify-content': justifyContentValue,
+          '--flex-align-content': alignContentValue,
+          ...style,
+        } as React.CSSProperties}
         data-responsive={dataResponsive}
-        data-direction={direction}
-        data-wrap={wrapValue}
         aria-label={ariaLabel}
         aria-labelledby={ariaLabelledBy}
         aria-describedby={ariaDescribedBy}
