@@ -21,6 +21,7 @@ Complete API reference and technical specifications. Use this when you need spec
 - [Viewport Animations API](./reference/viewport-animations.md)
 - [Sequences API](./reference/sequences.md)
 - [AnimatePresence API](./reference/animate-presence.md)
+- [Layout Primitives API](./reference/layout-primitives.md)
 - [Type Definitions](./reference/types.md)
 
 ---
@@ -36,6 +37,7 @@ Step-by-step lessons that teach you how to use Cascade Motion. Follow these to l
 - [Motion Values Tutorial](./tutorials/motion-values.md)
 - [Gestures Tutorial](./tutorials/gestures.md)
 - [Layout Transitions Tutorial](./tutorials/layout-transitions.md)
+- [Layout Primitives Tutorial](./tutorials/layout-primitives.md)
 
 ---
 
@@ -66,6 +68,7 @@ Goal-oriented guides that show you how to accomplish specific tasks. Each guide 
 - [Viewport Animation Patterns](./how-to/viewport-animation-patterns.md) - Best practices for scroll animations
 - [Inject Animation CSS](./how-to/inject-animation-css.md) - CSS injection patterns
 - [Debug Animations](./how-to/debug-animations.md) - Enable debug logging
+- [Create Responsive Layout](./how-to/create-responsive-layout.md) - Build responsive layouts with primitives
 
 ---
 
@@ -84,6 +87,7 @@ Conceptual documentation that explains the "why" and "how" behind Cascade Motion
 - [Comparison with Framer Motion](./explanations/comparison-framer-motion.md)
 - [Comparison with Other Libraries](./explanations/comparison-other-libraries.md)
 - [Accessibility](./explanations/accessibility.md)
+- [Layout Primitives Philosophy](./explanations/layout-primitives-philosophy.md)
 - [FAQ](./explanations/faq.md)
 
 ---

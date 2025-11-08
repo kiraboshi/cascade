@@ -74,8 +74,8 @@ export function GradientAnimationDemo() {
           CSS Keyframe Gradient Animation
         </h2>
         <AnimatedGradientCSS
-          fromColor={tokens.color.blue[400]}
-          toColor={tokens.color.purple[500]}
+          fromColor={tokens.color.blue[100]}
+          toColor={tokens.color.blue[900]}
           duration={2000}
           style={{
             padding: 'var(--cascade-space-xl)',

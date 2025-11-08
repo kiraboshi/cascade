@@ -69,10 +69,12 @@
 @layer base {
   :root {
     font-family: var(--cascade-typography-font-family-sans);
+    color: oklch(0.20 0 0);
   }
   
   body {
     font-size: var(--cascade-typography-font-size-base);
+    color: inherit;
   }
 }
 

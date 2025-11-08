@@ -87,6 +87,81 @@ function generateLayoutsLayer() {
       inset: 0;
       object-fit: var(--frame-object-fit, cover);
     }
+    
+    .box {
+      padding: var(--box-padding, 0);
+      margin: var(--box-margin, 0);
+      background: var(--box-background, transparent);
+      border: var(--box-border, none);
+      border-radius: var(--box-border-radius, 0);
+      width: var(--box-width, auto);
+      height: var(--box-height, auto);
+      max-width: var(--box-max-width, none);
+      max-height: var(--box-max-height, none);
+      min-width: var(--box-min-width, 0);
+      min-height: var(--box-min-height, 0);
+    }
+    
+    .grid {
+      display: grid;
+      gap: var(--grid-gap, 0);
+      grid-template-columns: var(--grid-columns, repeat(3, 1fr));
+      grid-template-rows: var(--grid-rows, none);
+      align-items: var(--grid-align-items, stretch);
+      justify-items: var(--grid-justify-items, stretch);
+      align-content: var(--grid-align-content, start);
+      justify-content: var(--grid-justify-content, start);
+    }
+    
+    .center {
+      margin-left: auto;
+      margin-right: auto;
+      max-width: var(--center-max-width, 100%);
+      min-height: var(--center-min-height, auto);
+      padding: var(--center-padding, 0);
+      text-align: var(--center-text-align, inherit);
+      display: var(--center-display, block);
+      align-items: var(--center-align-items, center);
+      justify-content: var(--center-justify-content, center);
+    }
+    
+    .sidebar {
+      display: grid;
+      grid-template-columns: var(--sidebar-template-columns);
+      gap: var(--sidebar-gap, 0);
+      align-items: var(--sidebar-align-items, stretch);
+    }
+    
+    .sidebar[data-side="right"] {
+      grid-template-columns: var(--sidebar-template-columns);
+    }
+    
+    .split {
+      display: grid;
+      grid-template-columns: var(--split-template-columns);
+      gap: var(--split-gap, 0);
+      align-items: var(--split-align, stretch);
+    }
+    
+    .split[data-switch-to="stack"] {
+      grid-template-columns: 1fr;
+    }
+    
+    @media (max-width: 768px) {
+      .split[data-switch-to="stack"] {
+        grid-template-columns: 1fr;
+      }
+    }
+    
+    .flex {
+      display: flex;
+      gap: var(--flex-gap, 0);
+      flex-direction: var(--flex-direction, row);
+      flex-wrap: var(--flex-wrap, nowrap);
+      align-items: var(--flex-align-items, stretch);
+      justify-content: var(--flex-justify-content, flex-start);
+      align-content: var(--flex-align-content, stretch);
+    }
   `;
 }
 /**

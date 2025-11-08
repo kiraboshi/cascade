@@ -13,10 +13,11 @@ import { AnimationControlsDemo } from './pages/AnimationControlsDemo';
 import { LandingPage } from './pages/LandingPage';
 import { LayoutAnimationsDemo } from './pages/LayoutAnimationsDemo';
 import { GradientAnimationDemo } from './pages/GradientAnimationDemo';
+import { LayoutPrimitivesShowcase } from './pages/LayoutPrimitivesShowcase';
 import './App.css';
 
 function App() {
-  const [activeTab, setActiveTab] = useState<'landing' | 'foundation' | 'primitives' | 'motion' | 'sequence' | 'motion-values' | 'gestures' | 'layout-transitions' | 'viewport-animations' | 'animate-presence' | 'animation-controls' | 'layout-animations' | 'gradient-animations'>('landing');
+  const [activeTab, setActiveTab] = useState<'landing' | 'foundation' | 'primitives' | 'motion' | 'sequence' | 'motion-values' | 'gestures' | 'layout-transitions' | 'viewport-animations' | 'animate-presence' | 'animation-controls' | 'layout-animations' | 'gradient-animations' | 'layout-primitives-showcase'>('landing');
 
   return (
     <Stack spacing="lg" style={{ minHeight: '100vh', padding: activeTab === 'landing' ? '0' : '2rem' }}>
@@ -107,13 +108,19 @@ function App() {
           >
             Gradient Animations
           </button>
+          <button
+            onClick={() => setActiveTab('layout-primitives-showcase')}
+            className={activeTab === 'layout-primitives-showcase' ? 'active' : ''}
+          >
+            Layout Showcase
+          </button>
         </Cluster>
       </nav>
         </>
       )}
 
       <main>
-        {activeTab === 'landing' && <LandingPage />}
+        {activeTab === 'landing' && <LandingPage onNavigate={setActiveTab} />}
         {activeTab === 'foundation' && <FoundationDemo />}
         {activeTab === 'primitives' && <PrimitivesDemo />}
         {activeTab === 'motion' && <MotionDemo />}
@@ -126,6 +133,7 @@ function App() {
         {activeTab === 'animation-controls' && <AnimationControlsDemo />}
         {activeTab === 'layout-animations' && <LayoutAnimationsDemo />}
         {activeTab === 'gradient-animations' && <GradientAnimationDemo />}
+        {activeTab === 'layout-primitives-showcase' && <LayoutPrimitivesShowcase />}
       </main>
     </Stack>
   );

@@ -7,7 +7,7 @@
  */
 
 import { useEffect, useRef, useState } from 'react';
-import { Stack, Cluster } from '@cascade/react';
+import { Stack, Cluster, Box } from '@cascade/react';
 import {
   useMotionValue,
   useScale,
@@ -29,15 +29,70 @@ import {
   useMotionStyles,
 } from '../components';
 
-// Hero Section - Now using reusable AnimatedHero component
-function HeroSection() {
+// Navigation Bar for Landing Page
+function LandingNav({ onNavigate }: { onNavigate?: (tab: string) => void }) {
+  if (!onNavigate) return null;
+  
   return (
-    <AnimatedHero
-      title="Cascade CSS Foundation"
-      subtitle="A production-ready, universal layout system that treats CSS as a foundational rendering layer"
-      ctaText="Get Started"
-      onCtaClick={() => console.log('CTA clicked')}
-    />
+    <Box
+      padding={['md', 'lg']}
+      background="rgba(255, 255, 255, 0.95)"
+      style={{
+        position: 'sticky',
+        top: 0,
+        zIndex: 100,
+        backdropFilter: 'blur(10px)',
+        borderBottom: '1px solid rgba(0, 0, 0, 0.1)',
+      }}
+    >
+      <Cluster spacing="md" justify="between">
+        <h2 style={{ margin: 0, fontSize: '1.5rem' }}>Cascade CSS</h2>
+        <Cluster spacing="sm">
+          <button
+            onClick={() => onNavigate('layout-primitives-showcase')}
+            style={{
+              padding: '0.5rem 1rem',
+              background: tokens.color.blue[500],
+              color: 'white',
+              border: 'none',
+              borderRadius: '4px',
+              cursor: 'pointer',
+              fontSize: '0.9rem',
+            }}
+          >
+            Layout Showcase
+          </button>
+          <button
+            onClick={() => onNavigate('primitives')}
+            style={{
+              padding: '0.5rem 1rem',
+              background: 'transparent',
+              color: tokens.color.blue[500],
+              border: `1px solid ${tokens.color.blue[500]}`,
+              borderRadius: '4px',
+              cursor: 'pointer',
+              fontSize: '0.9rem',
+            }}
+          >
+            All Demos
+          </button>
+        </Cluster>
+      </Cluster>
+    </Box>
+  );
+}
+
+// Hero Section - Now using reusable AnimatedHero component
+function HeroSection({ onNavigate }: { onNavigate?: (tab: string) => void }) {
+  return (
+    <>
+      <AnimatedHero
+        title="Cascade CSS Foundation"
+        subtitle="A production-ready, universal layout system that treats CSS as a foundational rendering layer"
+        ctaText="View Layout Showcase"
+        onCtaClick={() => onNavigate?.('layout-primitives-showcase')}
+      />
+    </>
   );
 }
 
@@ -156,7 +211,7 @@ function TestimonialsSection() {
 }
 
 // Footer Component - Now using reusable AnimatedSection component
-function Footer() {
+function Footer({ onNavigate }: { onNavigate?: (tab: string) => void }) {
   return (
     <AnimatedSection
       title=""
@@ -167,6 +222,24 @@ function Footer() {
         <p style={{ fontSize: tokens.typography.fontSize.base, margin: 0 }}>
           Built with Cascade CSS Foundation
         </p>
+        {onNavigate && (
+          <Cluster spacing="md" justify="center">
+            <button
+              onClick={() => onNavigate('layout-primitives-showcase')}
+              style={{
+                padding: '0.5rem 1rem',
+                background: 'transparent',
+                color: 'white',
+                border: '1px solid white',
+                borderRadius: '4px',
+                cursor: 'pointer',
+                fontSize: '0.9rem',
+              }}
+            >
+              View Layout Showcase
+            </button>
+          </Cluster>
+        )}
         <p
           style={{
             fontSize: tokens.typography.fontSize.sm,
@@ -533,14 +606,15 @@ function CrazyAnimationShowcase() {
 }
 
 // Main Landing Page Component
-export function LandingPage() {
+export function LandingPage({ onNavigate }: { onNavigate?: (tab: string) => void }) {
   return (
     <div style={{ width: '100%' }}>
-      <HeroSection />
+      <LandingNav onNavigate={onNavigate} />
+      <HeroSection onNavigate={onNavigate} />
       <FeaturesSection />
       <TestimonialsSection />
       <CrazyAnimationShowcase />
-      <Footer />
+      <Footer onNavigate={onNavigate} />
     </div>
   );
 }
