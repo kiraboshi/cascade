@@ -34,3 +34,12 @@ pnpm dev
 
 See [plans/completed/foundation.md](./plans/completed/foundation.md) for detailed implementation specifications.
 
+## Integration
+
+Cascade Motion can be integrated into other projects via:
+
+- **npm Publishing** - Publish packages to npm registry
+- **Git Submodule** - Use source directly from repository
+
+See [docs/INTEGRATION_STRATEGIES.md](./docs/INTEGRATION_STRATEGIES.md) for detailed integration guides.
+
