@@ -17,7 +17,7 @@ const tokenBasedStates = defineAnimationStates({
     opacity: 1,
     transform: 'translateY(0)',
     transition: {
-      duration: tokens.motion.duration.medium,
+      duration: tokens.motion.duration.normal,
       easing: tokens.motion.easing.easeOut,
     },
   },

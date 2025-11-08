@@ -7,10 +7,12 @@ import { tokens } from '@cascade/tokens';
 
 /**
  * Transition configuration
+ * Duration and delay can be numbers (milliseconds) or strings (e.g., "300ms", "1.5s")
+ * String values are automatically normalized to numbers during validation
  */
 export interface TransitionConfig {
-  duration?: number;
-  delay?: number;
+  duration?: number | string;
+  delay?: number | string;
   easing?: string;
   type?: 'spring' | 'tween' | 'keyframes';
   // Spring-specific
@@ -248,6 +250,8 @@ function extractPropertyValue(propValue: PropertyValue): {
 
 /**
  * Resolve token references in transition config
+ * Note: Duration normalization happens in validateState, so this function
+ * only handles token reference strings (not CSS duration strings like "300ms")
  */
 function resolveTransitionTokens(transition: TransitionConfig): TransitionConfig {
   if (!transition) {
@@ -256,11 +260,25 @@ function resolveTransitionTokens(transition: TransitionConfig): TransitionConfig
   
   const resolved: TransitionConfig = { ...transition };
   
-  // Resolve duration if it's a token reference
+  // Resolve duration if it's a token reference string
   if (typeof transition.duration === 'string' && transition.duration.startsWith('tokens.')) {
     const resolvedDuration = resolveTokenValue(transition.duration);
     if (typeof resolvedDuration === 'number') {
       resolved.duration = resolvedDuration;
+    } else if (typeof resolvedDuration === 'string') {
+      // Keep as string - will be normalized in validateState
+      resolved.duration = resolvedDuration;
+    }
+  }
+  
+  // Resolve delay if it's a token reference string
+  if (typeof transition.delay === 'string' && transition.delay.startsWith('tokens.')) {
+    const resolvedDelay = resolveTokenValue(transition.delay);
+    if (typeof resolvedDelay === 'number') {
+      resolved.delay = resolvedDelay;
+    } else if (typeof resolvedDelay === 'string') {
+      // Keep as string - will be normalized in validateState
+      resolved.delay = resolvedDelay;
     }
   }
   
@@ -322,6 +340,45 @@ function extractTransition(state: AnimationStateDefinition): TransitionConfig | 
 }
 
 /**
+ * Parse duration string (e.g., "300ms", "1.5s") to milliseconds (number)
+ */
+function parseDuration(value: string | number): number | null {
+  if (typeof value === 'number') {
+    return value;
+  }
+  
+  if (typeof value !== 'string') {
+    return null;
+  }
+  
+  // Handle token references by resolving them first
+  const resolved = resolveTokenValue(value);
+  if (typeof resolved === 'number') {
+    return resolved;
+  }
+  
+  if (typeof resolved !== 'string') {
+    return null;
+  }
+  
+  // Parse CSS duration strings like "300ms", "1.5s", etc.
+  const match = resolved.match(/^([\d.]+)(ms|s)$/);
+  if (match) {
+    const num = parseFloat(match[1]);
+    const unit = match[2];
+    return unit === 's' ? num * 1000 : num;
+  }
+  
+  // Try parsing as plain number string
+  const num = parseFloat(resolved);
+  if (!isNaN(num)) {
+    return num;
+  }
+  
+  return null;
+}
+
+/**
  * Validate state definition
  */
 function validateState(
@@ -342,12 +399,28 @@ function validateState(
   if ('transition' in state) {
     const transition = state.transition;
     if (typeof transition === 'object' && transition !== null) {
-      if ('duration' in transition && typeof transition.duration !== 'number') {
-        errors.push(`State "${stateName}": transition.duration must be a number`);
+      // Normalize and validate duration
+      if ('duration' in transition) {
+        const parsedDuration = parseDuration(transition.duration as string | number);
+        if (parsedDuration === null || parsedDuration < 0) {
+          errors.push(`State "${stateName}": transition.duration must be a number or a valid duration string (e.g., "300ms", "1.5s")`);
+        } else {
+          // Normalize the duration to a number
+          (transition as any).duration = parsedDuration;
+        }
       }
-      if ('delay' in transition && typeof transition.delay !== 'number') {
-        errors.push(`State "${stateName}": transition.delay must be a number`);
+      
+      // Normalize and validate delay
+      if ('delay' in transition) {
+        const parsedDelay = parseDuration(transition.delay as string | number);
+        if (parsedDelay === null || parsedDelay < 0) {
+          errors.push(`State "${stateName}": transition.delay must be a number or a valid duration string (e.g., "300ms", "1.5s")`);
+        } else {
+          // Normalize the delay to a number
+          (transition as any).delay = parsedDelay;
+        }
       }
+      
       if ('easing' in transition && typeof transition.easing !== 'string') {
         errors.push(`State "${stateName}": transition.easing must be a string`);
       }
