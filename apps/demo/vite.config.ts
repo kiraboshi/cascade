@@ -60,6 +60,11 @@ function workspacePackageResolver(): Plugin {
 }
 
 export default defineConfig({
+  // Base path for GitHub Pages deployment
+  // Set via environment variable: VITE_BASE_PATH
+  // For root deployment (username.github.io): use '/'
+  // For subdirectory deployment: use '/repo-name/'
+  base: process.env.VITE_BASE_PATH || '/',
   plugins: [
     workspacePackageResolver(),
     cascadeVitePlugin({
